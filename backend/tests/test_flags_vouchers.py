@@ -168,7 +168,10 @@ async def test_redeem_lockout(client, clean_db):
         headers=h, json={"partner_name": "Naivas Kibera", "partner_type": "retailer"},
     )
     pin = issue.json()["pin"]
-    wrong_pin = "99" + pin[2:]
+    # Change the FIRST digit only, preserving the last 4 (so lookup succeeds)
+    # This guarantees wrong_pin != pin, regardless of pin's first char.
+    prefix = "1" if pin[0] != "1" else "2"
+    wrong_pin = prefix + pin[1:]
 
     for _ in range(3):
         r = await client.post("/fulfilment/redeem", headers=h, json={"pin": wrong_pin, "partner_name": "Naivas Kibera", "amount_pence": 1000})
