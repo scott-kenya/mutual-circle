@@ -1,28 +1,44 @@
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
-@import "@fontsource/inter/700.css";
+/* Only Latin subset - removes 40+ font files from the build */
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-700.css";
 
 @import "tailwindcss";
-@import "./theme/tokens.css";
 
 @theme {
-  --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
-  --color-ink: #111111;
-  --color-canvas: #FAF8F4;
-  --color-pine: #1F6B4A;
-  --color-sage: #DCE8E0;
+
+  --color-canvas: #F5F3EC;
+  --color-surface: #FBFAF6;
+  --color-tile: #EEEDE6;
+  --color-ink: #1A1F1C;
+  --color-muted: #5F655E;
+  --color-pine: #1E4D3A;
+  --color-pine-deep: #143828;
+  --color-lime: #D5E8B0;
+  --color-tint: #E6EEDD;
+  --color-green-ramp: #4E9B6B;
+  --color-green-ramp-light: #6FAE84;
+  --color-green-ramp-pale: #A9C9A2;
+
+  --radius-card: 22px;
+  --radius-tile: 16px;
+  --radius-button: 18px;
+  --shadow-soft: 0 4px 20px -4px rgba(26, 31, 28, 0.05);
 }
 
 @layer base {
   body {
     font-family: var(--font-sans);
-    background-color: #FAF8F4;
-    color: #111111;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, .font-display {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
+    font-weight: 700;
   }
 }
