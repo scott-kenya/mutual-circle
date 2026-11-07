@@ -16,6 +16,7 @@ import { SwapRequest, PoolRequest } from '../../types';
 import { RequesterMessages } from './Messages';
 import { RequesterHome } from './RequesterHome';
 import { SwapFlow } from './SwapFlow';
+import { PoolFlow } from './PoolFlow';
 import { MpesaModal } from './MpesaModal';
 
 type Tab = 'home' | 'swap' | 'pool' | 'match' | 'bench' | 'messages' | 'settings';
@@ -528,66 +529,30 @@ export const RequesterView: React.FC = () => {
     />
   );
 
-  const renderPool = () => {
-    if (poolStep === 'success' && poolResult) {
-      const cat = POOL_CATS.find(c => c.id === poolResult.category);
-      return (
-        <div className="p-4 space-y-3">
-          <div className="text-center pt-2 space-y-2"><div className={'w-14 h-14 rounded-full flex items-center justify-center mx-auto border-2 ' + (poolResult.status === 'pending_check' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-blue-50 text-blue-600 border-blue-200')}><CheckCircle className="w-7 h-7" /></div><div><h2 className="font-serif text-xl font-bold text-[#111111]">{poolResult.status === 'pending_check' ? 'Under review' : 'Request queued'}</h2><p className="text-[11px] text-[#111111]/50 mt-0.5 max-w-[240px] mx-auto">{poolResult.status === 'pending_check' ? 'OCR verification required before dispatch.' : 'Queued for the payment partner.'}</p></div></div>
-          <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-1.5 text-[10px]">
-            <div className="flex justify-between"><span className="text-[#111111]/50">Category</span><span className="font-semibold text-[#111111]">{cat?.name}</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Ref</span><span className="font-mono font-bold text-[#1F6B4A]">{poolResult.hashedObjectId}</span></div>
-            <div className="flex justify-between items-baseline"><span className="text-[#111111]/50">Amount</span><span className="font-mono font-bold text-[#111111]"><span className="text-[9px] text-[#111111]/60 mr-0.5">KES</span><span className="text-sm tabular-nums">{poolResult.amount.toLocaleString()}</span></span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Status</span><span className={'font-mono uppercase text-[9px] px-1.5 py-0.5 rounded ' + (poolResult.status === 'pending_check' ? 'bg-amber-50 text-amber-800' : 'bg-blue-50 text-blue-800')}>{poolResult.status.replace(/_/g, ' ')}</span></div>
-          </div>
-          <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-xl">
-            <div className="text-[9px] font-mono uppercase text-[#111111]/50 mb-3">What happens next</div>
-            <StatusTimeline steps={[
-              { key: 'submitted', label: 'Submitted', time: (poolResult as any).timestamp, state: 'done' },
-              { key: 'review', label: poolResult.status === 'pending_check' ? 'OCR verification' : 'Queued for partner', state: 'current' },
-              { key: 'paid', label: 'Paid to institution', state: 'pending' },
-            ]} />
-          </div>
-          <button onClick={() => goTab('home')} className="w-full py-2.5 bg-[#111111] hover:bg-black text-white rounded-xl text-xs font-medium">Done</button>
-        </div>
-      );
-    }
-    return (
-      <div className="p-4 space-y-3">
-        <div><h2 className="font-serif text-xl font-bold text-[#111111]">The Pool</h2><p className="text-[12px] text-[#111111]/50 mt-0.5">Funds go directly to the institution.</p></div>
-        {rateLimited && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2"><AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" /><p className="text-[12px] text-rose-900">Daily limit reached.</p></div>}
-        {poolError && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2"><AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" /><p className="text-[12px] text-rose-900">{poolError}</p></div>}
-        <div className="text-[10px] font-mono uppercase tracking-wider text-[#111111]/50">Step {poolStep === 'category' ? 1 : 2} of 2</div>
-        <div className="flex items-center gap-1.5">
-          {(['category', 'details'] as PoolStep[]).map((s, i) => {
-            const active = poolStep === s || (s === 'category' && poolStep !== 'category');
-            const done = s === 'category' && poolStep === 'details';
-            return (<React.Fragment key={s}><div className={'w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ' + (active ? 'bg-blue-600 text-white' : 'bg-[#111111]/10 text-[#111111]/40')}>{done ? <Check className="w-3 h-3" /> : i + 1}</div>{i < 1 && <div className={'flex-1 h-0.5 ' + (done ? 'bg-blue-600' : 'bg-[#111111]/10')} />}</React.Fragment>);
-          })}
-        </div>
-        {poolStep === 'category' && (
-          <div className="space-y-2">
-            <p className="text-[12px] font-semibold uppercase tracking-wider text-[#111111]">1. What are you paying?</p>
-            {POOL_CATS.map(c => { const I = c.Icon; const selected = poolCat === c.id; return (<button key={c.id} onClick={() => setPoolCat(c.id)} className={'w-full p-3 rounded-xl border-2 text-left flex items-start gap-3 transition-all ' + (selected ? 'border-blue-600 bg-[#FAF8F4]' : 'border-[#111111]/15 bg-white')}><div className={'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ' + c.accent}><I className="w-4 h-4" /></div><div className="flex-1 min-w-0"><div className="font-bold text-[13px] text-[#111111]">{c.name}</div><div className="text-[12px] text-[#111111]/60 mt-0.5">{c.desc}</div></div>{selected && <CheckCircle className="w-4 h-4 text-blue-600 shrink-0" />}</button>); })}
-            {poolCat === 'hospital_invoice' && <div className="p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-1.5"><AlertTriangle className="w-3 h-3 text-rose-600 shrink-0 mt-0.5" /><p className="text-[11px] text-rose-900 leading-relaxed">Only invoice number and amount. <strong>No clinical details</strong> are collected.</p></div>}
-            <button onClick={() => setPoolStep('details')} disabled={!poolCat} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-medium disabled:opacity-40 mt-1">Continue</button>
-          </div>
-        )}
-        {poolStep === 'details' && (() => {
-          const cat = POOL_CATS.find(c => c.id === poolCat)!;
-          return (
-            <div className="space-y-3">
-              <p className="text-[12px] font-semibold uppercase tracking-wider text-[#111111]">2. Bill details</p>
-              <div className="space-y-1"><label className="text-[11px] font-mono uppercase text-[#111111]/50 flex items-center gap-1"><FileText className="w-3 h-3" /> {cat.objLabel}</label><input type="text" value={poolObject} onChange={e => { setPoolObject(e.target.value); setPoolError(null); }} placeholder={cat.placeholder} className={'w-full bg-white border rounded-lg px-3 py-2 text-xs font-mono focus:ring-2 focus:ring-blue-600 outline-none ' + (objectError ? 'border-rose-300' : 'border-[#111111]/15')} />{objectError && <div className="text-[9px] text-rose-600 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{objectError}</div>}{!objectError && objectValid && <div className="text-[9px] text-emerald-700 flex items-center gap-1"><Check className="w-3 h-3" />Valid format</div>}</div>
-              <div className="space-y-1"><label className="text-[11px] font-mono uppercase text-[#111111]/50">Amount (KES)</label><input type="number" value={poolAmount} onChange={e => { setPoolAmount(e.target.value); setPoolError(null); }} placeholder="e.g. 3500" className="w-full bg-white border border-[#111111]/15 rounded-lg px-3 py-2 text-xs font-mono focus:ring-2 focus:ring-blue-600 outline-none" />{numAmount > 0 && numAmount > valueRemaining && <div className="text-[9px] text-rose-600 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Exceeds session allowance (KES {valueRemaining.toLocaleString()} left)</div>}</div>
-              {willEscalate && <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-1.5"><AlertTriangle className="w-3 h-3 text-amber-700 shrink-0 mt-0.5" /><p className="text-[11px] text-amber-900 leading-relaxed">Over KES 5,000 triggers <strong>Tier 3 OCR</strong>.</p></div>}
-              <div className="flex gap-2 pt-1"><button onClick={() => setPoolStep('category')} className="flex-1 py-2.5 bg-white border border-[#111111]/20 text-[#111111] rounded-xl text-xs font-medium">Back</button><button onClick={handleSubmitPool} disabled={!objectValid || !numAmount || pooling || rateLimited || numAmount > valueRemaining} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-medium disabled:opacity-40">{pooling ? 'Submitting...' : 'Submit'}</button></div>
-            </div>
-          );
-        })()}
-      </div>
-    );
-  };
+  const renderPool = () => (
+    <PoolFlow
+      poolStep={poolStep}
+      setPoolStep={setPoolStep}
+      poolResult={poolResult}
+      poolCat={poolCat}
+      setPoolCat={setPoolCat}
+      poolObject={poolObject}
+      setPoolObject={setPoolObject}
+      poolAmount={poolAmount}
+      setPoolAmount={setPoolAmount}
+      poolError={poolError}
+      setPoolError={setPoolError}
+      objectError={objectError}
+      objectValid={objectValid}
+      willEscalate={willEscalate}
+      numAmount={numAmount}
+      valueRemaining={valueRemaining}
+      pooling={pooling}
+      rateLimited={rateLimited}
+      handleSubmitPool={handleSubmitPool}
+      goTab={goTab}
+    />
+  );
 
   const renderMatch = () => {
     const visible = opportunitiesWithIcons.filter(o => !declined.has(o.id));
