@@ -19,6 +19,8 @@ import { SwapFlow } from './SwapFlow';
 import { PoolFlow } from './PoolFlow';
 import { MatchTab } from './MatchTab';
 import { BenchTab } from './BenchTab';
+import { HouseholdSetup } from './HouseholdSetup';
+import { SettingsTab } from './SettingsTab';
 import { MpesaModal } from './MpesaModal';
 
 type Tab = 'home' | 'swap' | 'pool' | 'match' | 'bench' | 'messages' | 'settings';
@@ -598,170 +600,42 @@ export const RequesterView: React.FC = () => {
   };
 
   const renderHouseholdStep = () => (
-    <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6">
-      <div className="w-full max-w-[340px] bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black shrink-0">
-        <div className="bg-[#FAF8F4] rounded-[2rem] overflow-hidden flex flex-col h-[620px]">
-          <div className="px-5 pt-3 pb-1 flex items-center justify-between text-[10px] font-medium text-[#111111]/60">
-            <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            <span className="text-[8px] font-mono bg-[#DCE8E0] text-[#1F6B4A] px-1.5 py-0.5 rounded uppercase font-bold">Welcome</span>
-          </div>
-          <div className="flex-1 flex flex-col justify-center px-6 space-y-5 overflow-y-auto">
-            <div className="text-center space-y-2">
-              <div className="w-14 h-14 bg-[#DCE8E0] text-[#1F6B4A] rounded-2xl flex items-center justify-center mx-auto">
-                <Users className="w-7 h-7" />
-              </div>
-              <div>
-                <h1 className="font-serif text-xl font-bold text-[#111111]">Who is this for?</h1>
-                <p className="text-[11px] text-[#111111]/60 mt-1">This helps us prepare the right bundle size.</p>
-              </div>
-            </div>
-
-            {householdMode === null && (
-              <div className="space-y-2">
-                <button
-                  onClick={() => handleHouseholdComplete(1)}
-                  className="w-full p-4 bg-white border-2 border-[#111111]/15 hover:border-[#1F6B4A] rounded-xl text-left transition-colors"
-                >
-                  <div className="text-sm font-bold text-[#111111]">Just me</div>
-                  <div className="text-[10px] text-[#111111]/50 mt-0.5">A standard bundle for one person</div>
-                </button>
-                <button
-                  onClick={() => { setHouseholdMode('family'); setHouseholdSize(2); }}
-                  className="w-full p-4 bg-white border-2 border-[#111111]/15 hover:border-[#1F6B4A] rounded-xl text-left transition-colors"
-                >
-                  <div className="text-sm font-bold text-[#111111]">My household</div>
-                  <div className="text-[10px] text-[#111111]/50 mt-0.5">Bundles sized for 2 or more people</div>
-                </button>
-              </div>
-            )}
-
-            {householdMode === 'family' && (
-              <div className="space-y-3">
-                <div className="text-center">
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-[#111111]/60">
-                    How many people, including you?
-                  </label>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {[2, 3, 4, 5, 6, 7, 8, 9].map(n => (
-                    <button
-                      key={n}
-                      onClick={() => setHouseholdSize(n)}
-                      className={'py-3 rounded-xl border-2 text-center font-mono text-sm font-bold transition-all ' + (householdSize === n ? 'bg-[#1F6B4A] text-white border-[#1F6B4A]' : 'bg-white border-[#111111]/15 text-[#111111] hover:border-[#111111]/30')}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-                <div className="text-center pt-1">
-                  <button
-                    onClick={() => setHouseholdSize(10)}
-                    className={'px-4 py-2 rounded-lg border-2 font-mono text-xs font-bold transition-all ' + (householdSize >= 10 ? 'bg-[#1F6B4A] text-white border-[#1F6B4A]' : 'bg-white border-[#111111]/15 text-[#111111]')}
-                  >
-                    10 or more
-                  </button>
-                </div>
-                <div className="flex gap-2 pt-1">
-                  <button
-                    onClick={() => { setHouseholdMode(null); setHouseholdError(null); }}
-                    className="flex-1 py-2.5 bg-white border border-[#111111]/20 text-[#111111] rounded-xl text-xs font-medium"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={() => handleHouseholdComplete(householdSize)}
-                    className="flex-1 py-2.5 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-xl text-xs font-medium"
-                  >
-                    Continue
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {householdError && (
-              <div className="text-[10px] text-rose-600 flex items-center gap-1 justify-center">
-                <AlertCircle className="w-3 h-3" />
-                {householdError}
-              </div>
-            )}
-          </div>
-          <div className="p-3 text-center text-[9px] text-[#111111]/40 font-mono border-t border-[#111111]/10">
-            You can update this later in your profile
-          </div>
-        </div>
-      </div>
-
-      <div className="w-full max-w-sm space-y-3">
-        <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-2">
-          <h3 className="text-sm font-bold text-[#111111] flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-[#1F6B4A]" />
-            Why we ask
-          </h3>
-          <p className="text-[10px] text-[#111111]/70 leading-relaxed">
-            Your household size determines the bundle variant. A single person gets one week of staples. A family of five gets a larger bundle with more of the same items.
-          </p>
-          <p className="text-[10px] text-[#111111]/70 leading-relaxed">
-            We never share this information. It is used only to size your bundle correctly.
-          </p>
-        </div>
-        <div className="p-4 bg-[#FAF8F4] border border-[#111111]/15 rounded-xl space-y-1.5">
-          <h4 className="text-[10px] font-bold text-[#111111] uppercase tracking-wider">Bundle sizes</h4>
-          <div className="text-[10px] text-[#111111]/70 space-y-1">
-            <div className="flex justify-between"><span>1 person</span><span className="font-mono">Small</span></div>
-            <div className="flex justify-between"><span>2-3 people</span><span className="font-mono">Standard</span></div>
-            <div className="flex justify-between"><span>4-6 people</span><span className="font-mono">Large</span></div>
-            <div className="flex justify-between"><span>7+ people</span><span className="font-mono">Family</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <HouseholdSetup
+      householdMode={householdMode}
+      setHouseholdMode={setHouseholdMode}
+      householdSize={householdSize}
+      setHouseholdSize={setHouseholdSize}
+      householdError={householdError}
+      handleHouseholdComplete={handleHouseholdComplete}
+    />
   );
 
   if (householdStep) {
     return renderHouseholdStep();
   }
   const renderSettings = () => (
-    <div className="p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-serif text-lg font-bold text-[#111111]">Settings</h2>
-          <p className="text-[10px] font-mono text-[#111111]/50 mt-0.5">Account and privacy</p>
-        </div>
-        <button onClick={() => setTab('home')} className="text-[10px] font-mono text-[#111111]/60 hover:text-[#111111]">Back</button>
-      </div>
-
-      <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-[#111111] flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-[#1F6B4A]" /> Server View
-          </h3>
-          <button onClick={() => setShowServer(!showServer)} className="text-[10px] text-[#1F6B4A] hover:underline flex items-center gap-1">
-            {showServer ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-            {showServer ? 'Hide' : 'Reveal'}
-          </button>
-        </div>
-        <div className="space-y-1.5 pt-2 border-t border-[#111111]/10 font-mono text-[10px]">
-          <div className="flex justify-between"><span className="text-[#111111]/50">Token (HMAC)</span><span className="text-[#1F6B4A] font-bold truncate ml-2">{tokenHash}</span></div>
-          <div className="flex justify-between"><span className="text-[#111111]/50">Raw phone</span><span className="text-rose-600 font-bold">{showServer ? 'NOT STORED' : '******'}</span></div>
-          <div className="flex justify-between"><span className="text-[#111111]/50">Name</span><span className="text-rose-600 font-bold">NONE</span></div>
-          <div className="flex justify-between border-t border-[#111111]/10 pt-1.5 mt-1.5"><span className="text-[#111111]/50">Rate (per token)</span><span className="text-[#111111]">{rate.count} / {MAX_REQUESTS}</span></div>
-          <div className="flex justify-between"><span className="text-[#111111]/50">Value (per token)</span><span className="text-[#111111]">KES {rate.value.toLocaleString()} / {MAX_VALUE.toLocaleString()}</span></div>
-          <div className="flex justify-between"><span className="text-[#111111]/50">Persisted history</span><span className="text-[#111111]">{mergedHistory.length} records</span></div>
-        </div>
-        {showServer && <div className="p-2 bg-rose-50 border border-rose-200 rounded text-[9px] text-rose-800 leading-relaxed mt-2"><strong>Invariant:</strong> phone number is hashed on verification and immediately discarded. Rate limits and history are keyed to the HMAC token, not the session.</div>}
-      </div>
-
-      <div className="p-4 bg-[#FAF8F4] border border-[#111111]/15 rounded-xl space-y-1.5">
-        <h4 className="text-[10px] font-bold text-[#111111] uppercase tracking-wider">Spec Coverage</h4>
-        {['HMAC token (4.1)', 'Simulated OTP verification', 'Per-token rate limits (4.1)', 'Persistent history','Withdraw flow', 'The Swap (4.2)', 'The Pool (4.3)', 'Hospital ban on clinical data (4.5)', 'Tier 2/3 escalation (4.8)','The Match + decline (4.4)', 'The Bench referral (4.9)'].map(f => (
-          <div key={f} className="flex items-center gap-1.5 text-[10px] text-[#111111]/70"><div className="w-1 h-1 rounded-full bg-[#1F6B4A]" />{f}</div>
-        ))}
-      </div>
-
-      <button onClick={() => { setTab('home'); setShowServer(false); logout(); setIntakeStep('phone'); setPhone(''); setOtpInput(''); setGeneratedOtp(''); setOtpAttempts(0); setResendCooldown(0); }} className="w-full py-2.5 text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg bg-white flex items-center justify-center gap-1.5">
-        <RotateCcw className="w-3 h-3" /> Reset session
-      </button>
-    </div>
+    <SettingsTab
+      tokenHash={tokenHash}
+      rate={rate}
+      MAX_REQUESTS={MAX_REQUESTS}
+      MAX_VALUE={MAX_VALUE}
+      historyCount={mergedHistory.length}
+      showServer={showServer}
+      setShowServer={setShowServer}
+      onBack={() => setTab('home')}
+      onReset={() => {
+        setTab('home');
+        setShowServer(false);
+        logout();
+        setIntakeStep('phone');
+        setPhone('');
+        setOtpInput('');
+        setGeneratedOtp('');
+        setOtpAttempts(0);
+        setResendCooldown(0);
+      }}
+      logout={logout}
+    />
   );
 
 
