@@ -15,6 +15,7 @@ import { useToast } from '../Shared/Toast';
 import { SwapRequest, PoolRequest } from '../../types';
 import { RequesterMessages } from './Messages';
 import { RequesterHome } from './RequesterHome';
+import { SwapFlow } from './SwapFlow';
 import { MpesaModal } from './MpesaModal';
 
 type Tab = 'home' | 'swap' | 'pool' | 'match' | 'bench' | 'messages' | 'settings';
@@ -508,65 +509,24 @@ export const RequesterView: React.FC = () => {
     />
   );
 
-  const renderSwap = () => {
-    if (swapStep === 'success' && swapResult) {
-      return (
-        <div className="p-4 space-y-3">
-          <div className="text-center pt-2 space-y-2"><div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto border-2 border-emerald-200"><CheckCircle className="w-7 h-7" /></div><div><h2 className="font-serif text-xl font-bold text-[#111111]">Locker reserved</h2><p className="text-[11px] text-[#111111]/50 mt-0.5">Collect anytime.</p></div></div>
-          <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-3">
-            <div className="pb-2 border-b border-[#111111]/10 flex items-center justify-between"><span className="text-[9px] font-mono uppercase text-[#111111]/50">Reference</span><span className="font-mono text-xs font-bold text-[#111111]">{'REF-' + swapResult.id.slice(0,8).toUpperCase()}</span></div>
-            <div className="flex items-start justify-between gap-2">
-              <div><div className="text-[9px] font-mono uppercase text-[#111111]/50">Collection PIN</div><div className="flex items-center gap-1.5 mt-1"><span className="font-mono text-3xl font-bold tracking-widest text-[#1F6B4A]">{swapResult.pin}</span><button onClick={copyPin} aria-label="Copy PIN" className="p-1 rounded hover:bg-[#FAF8F4] text-[#111111]/50">{pinCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}</button></div></div>
-              <QrPlaceholder seed={swapResult.qrPayload} />
-            </div>
-            <div className="pt-2 border-t border-[#111111]/10 space-y-1 text-[10px]">
-              <div className="flex justify-between"><span className="text-[#111111]/50">Bundle</span><span className="font-semibold text-[#111111]">{swapResult.bundleCategory}</span></div>
-              <div className="flex justify-between"><span className="text-[#111111]/50">Locker</span><span className="font-semibold text-[#111111]">{swapResult.lockerLocation}</span></div>
-            </div>
-          </div>
-          <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-xl">
-            <div className="text-[9px] font-mono uppercase text-[#111111]/50 mb-3">What happens next</div>
-            <StatusTimeline steps={[
-              { key: 'reserved', label: 'Reserved', time: (swapResult as any).timestamp, state: 'done' },
-              { key: 'ready', label: 'Ready for pickup', time: 'Now', state: 'current' },
-              { key: 'collected', label: 'Collected', state: 'pending' },
-            ]} />
-          </div>
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-1.5"><div className="flex items-center gap-1 text-[9px] uppercase font-bold text-blue-900"><ScanLine className="w-3 h-3" /> How to collect</div><ol className="text-[10px] text-blue-900/80 leading-relaxed list-decimal pl-4 space-y-0.5"><li>Go to {swapResult.lockerLocation}</li><li>Enter PIN at the terminal</li><li>Take your bundle</li></ol></div>
-          <button onClick={() => goTab('home')} className="w-full py-2.5 bg-[#111111] hover:bg-black text-white rounded-xl text-xs font-medium">Done</button>
-        </div>
-      );
-    }
-    return (
-      <div className="p-4 space-y-3">
-        <div><h2 className="font-serif text-xl font-bold text-[#111111]">The Swap</h2><p className="text-[12px] text-[#111111]/50 mt-0.5">Reserve a bundle. Collect any time.</p></div>
-        {rateLimited && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2"><AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" /><p className="text-[12px] text-rose-900">Daily limit reached. Try again tomorrow.</p></div>}
-        {swapError && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2"><AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" /><p className="text-[12px] text-rose-900">{swapError}</p></div>}
-        <div className="text-[10px] font-mono uppercase tracking-wider text-[#111111]/50">Step {swapStep === 'bundle' ? 1 : 2} of 2</div>
-        <div className="flex items-center gap-1.5">
-          {(['bundle', 'location'] as SwapStep[]).map((s, i) => {
-            const active = swapStep === s || (s === 'bundle' && swapStep !== 'bundle');
-            const done = s === 'bundle' && swapStep === 'location';
-            return (<React.Fragment key={s}><div className={'w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ' + (active ? 'bg-[#1F6B4A] text-white' : 'bg-[#111111]/10 text-[#111111]/40')}>{done ? <Check className="w-3 h-3" /> : i + 1}</div>{i < 1 && <div className={'flex-1 h-0.5 ' + (done ? 'bg-[#1F6B4A]' : 'bg-[#111111]/10')} />}</React.Fragment>);
-          })}
-        </div>
-        {swapStep === 'bundle' && (
-          <div className="space-y-2">
-            <p className="text-[12px] font-semibold uppercase tracking-wider text-[#111111]">1. Choose bundle</p>
-            {BUNDLES.map(b => { const I = b.Icon; const selected = swapBundle === b.id; return (<button key={b.id} onClick={() => setSwapBundle(b.id)} className={'w-full p-3 rounded-xl border-2 text-left flex items-start gap-3 transition-all ' + (selected ? 'border-[#1F6B4A] bg-[#FAF8F4]' : 'border-[#111111]/15 bg-white')}><div className={'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ' + b.accent}><I className="w-4 h-4" /></div><div className="flex-1 min-w-0"><div className="font-bold text-[13px] text-[#111111]">{b.name}</div><div className="text-[12px] text-[#111111]/60 mt-0.5 leading-relaxed">{b.desc}</div></div>{selected && <CheckCircle className="w-4 h-4 text-[#1F6B4A] shrink-0" />}</button>); })}
-            <button onClick={() => setSwapStep('location')} disabled={!swapBundle} className="w-full py-2.5 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-xl text-xs font-medium disabled:opacity-40 mt-2">Continue</button>
-          </div>
-        )}
-        {swapStep === 'location' && (
-          <div className="space-y-2">
-            <p className="text-[12px] font-semibold uppercase tracking-wider text-[#111111]">2. Choose location</p>
-            {LOCATIONS.map(l => { const selected = swapLocation === l.id; return (<button key={l.id} onClick={() => setSwapLocation(l.id)} className={'w-full p-3 rounded-xl border-2 text-left flex items-center gap-2.5 transition-all ' + (selected ? 'border-[#1F6B4A] bg-[#FAF8F4]' : 'border-[#111111]/15 bg-white')}><MapPin className="w-4 h-4 text-[#1F6B4A] shrink-0" /><div className="flex-1 min-w-0"><div className="font-bold text-[13px] text-[#111111]">{l.id}</div><div className="text-[11px] text-[#111111]/50 mt-0.5">{l.sub}</div></div>{selected && <CheckCircle className="w-4 h-4 text-[#1F6B4A]" />}</button>); })}
-            <div className="flex gap-2 pt-1"><button onClick={() => setSwapStep('bundle')} className="flex-1 py-2.5 bg-white border border-[#111111]/20 text-[#111111] rounded-xl text-xs font-medium">Back</button><button onClick={handleReserve} disabled={!swapLocation || swapping || rateLimited} className="flex-1 py-2.5 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-xl text-xs font-medium disabled:opacity-40">{swapping ? 'Reserving...' : 'Reserve'}</button></div>
-          </div>
-        )}
-      </div>
-    );
-  };
+  const renderSwap = () => (
+    <SwapFlow
+      swapStep={swapStep}
+      setSwapStep={setSwapStep}
+      swapBundle={swapBundle}
+      setSwapBundle={setSwapBundle}
+      swapLocation={swapLocation}
+      setSwapLocation={setSwapLocation}
+      swapResult={swapResult}
+      swapError={swapError}
+      swapping={swapping}
+      rateLimited={rateLimited}
+      handleReserve={handleReserve}
+      copyPin={copyPin}
+      pinCopied={pinCopied}
+      goTab={goTab}
+    />
+  );
 
   const renderPool = () => {
     if (poolStep === 'success' && poolResult) {
