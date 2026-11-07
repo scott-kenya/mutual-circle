@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SmsDonorSimulator } from './SmsDonorSimulator';
+import { GiveFlow } from './GiveFlow';
+import { PledgeFlow } from './PledgeFlow';
 import { DonorActivityModal } from './DonorActivityModal';
 import { getDonorLeaderboard, getDonorProfile, updateDonorProfile, getImpactStats, getDistribution, getPublicPartners, getPublicLedger, downloadPublicLedgerCsv } from '../../lib/apiClient';
 import {
@@ -322,57 +324,48 @@ export const DonorView: React.FC = () => {
 
     if (screen === 'give_success') {
       return (
-        <div className="p-6 space-y-5">
-          <div className="pt-6 text-center space-y-3">
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto border-2 border-emerald-200"><Check className="w-8 h-8" /></div>
-            <div><h2 className="font-serif text-xl font-bold text-[#111111]">Pooled</h2><p className="text-xs text-[#111111]/50 mt-1">KES {finalAmount.toLocaleString()} added to the blind fund.</p></div>
-          {payingDonation && (
-            <button onClick={() => setPayingDonation(payingDonation)} className="w-full py-3 mt-4 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold shadow-md shadow-green-600/20">Pay with M-PESA</button>
-          )}
-          </div>
-          {payingDonation && donorContributions.find(d => d.id === payingDonation.id)?.status !== 'paid' && (
-            <button onClick={() => setPayingDonation(payingDonation)} className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold shadow-md shadow-green-600/20">Pay with M-PESA</button>
-          )}
-
-      {payingDonation && donorContributions.find(d => d.id === payingDonation.id)?.status !== 'paid' && (
-            <button onClick={() => setPayingDonation(payingDonation)} className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold shadow-md shadow-green-600/20">Pay with M-PESA</button>
-          )}
-          <div className="p-3 bg-[#FAF8F4] rounded-xl border border-[#111111]/10 space-y-1.5 text-[11px] font-mono">
-            <div className="flex justify-between"><span className="text-[#111111]/50">Fund</span><span className="font-semibold">Mutual Circle Pool</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Name</span><span className="font-semibold">{anon ? 'Anonymous' : 'Recorded'}</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Ledger</span><span className="font-semibold">{ledger ? 'Visible in ledger' : 'Not listed'}</span></div>
-            <div className="flex justify-between border-t border-[#111111]/10 pt-1.5 mt-1.5"><span className="text-[#111111]/50">Recipient link</span><span className="font-semibold text-[#1F6B4A]">None</span></div>
-          </div>
-          {ledger && <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-[10px] text-emerald-900 leading-relaxed"><Check className="w-3 h-3 inline mr-1" />Your contribution now appears in the Impact tab's recognition ledger.</div>}
-          <div className="space-y-2 pt-2">
-            <button onClick={() => { setScreen('tab'); setCustom(''); }} className="w-full py-3 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-xl text-sm font-medium">Give again</button>
-            <button onClick={() => { resetFlow(); setTab('give'); }} className="w-full py-2.5 bg-white border border-[#111111]/15 text-[#111111]/70 rounded-xl text-sm font-medium">View my donations</button>
-          </div>
-        </div>
+        <GiveFlow
+          showSuccess={true}
+          onCloseSuccess={() => setScreen('tab')}
+          onViewDonations={() => { resetFlow(); setTab('give'); }}
+          finalAmount={finalAmount}
+          selected={selected}
+          setSelected={setSelected}
+          custom={custom}
+          setCustom={setCustom}
+          anon={anon}
+          setAnon={setAnon}
+          ledger={ledger}
+          setLedger={setLedger}
+          processing={processing}
+          handleGive={handleGive}
+          payingDonation={payingDonation}
+          setPayingDonation={setPayingDonation}
+          donorContributions={donorContributions}
+        />
       );
     }
 
     if (screen === 'pledge_success') {
       return (
-        <div className="p-6 space-y-5">
-          <div className="pt-6 text-center space-y-3">
-            <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto border-2 border-amber-200"><Check className="w-8 h-8" /></div>
-            <div><h2 className="font-serif text-xl font-bold text-[#111111]">Pledge received</h2><p className="text-xs text-[#111111]/50 mt-1">Matching in {pLocality}.</p></div>
-          </div>
-          <div className="p-3 bg-[#FAF8F4] rounded-xl border border-[#111111]/10 space-y-1.5 text-[11px] font-mono">
-            <div className="flex justify-between"><span className="text-[#111111]/50">Type</span><span className="font-semibold">{pType === 'service_credit' ? 'Service credit' : 'Goods'}</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Locality</span><span className="font-semibold">{pLocality}</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Status</span><span className="font-semibold text-amber-700">Awaiting match</span></div>
-          </div>
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-[10px] text-amber-900 leading-relaxed">Your pledge is now visible to the Operations team for matching.</div>
-          <div className="space-y-2 pt-2">
-            {payingPledge && pledges.find(p => p.id === payingPledge.id)?.status !== 'settled' && (
-              <button onClick={() => setPayingPledge(payingPledge)} className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold shadow-md shadow-green-600/20">Pay with M-PESA</button>
-            )}
-            <button onClick={() => { setScreen('tab'); setPDesc(''); setPValue(''); }} className="w-full py-3 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-xl text-sm font-medium">Pledge again</button>
-            <button onClick={() => { resetFlow(); setTab('pledge'); }} className="w-full py-2.5 bg-white border border-[#111111]/15 text-[#111111]/70 rounded-xl text-sm font-medium">View my pledges</button>
-          </div>
-        </div>
+        <PledgeFlow
+          showSuccess={true}
+          onCloseSuccess={() => setScreen('tab')}
+          onViewPledges={() => { resetFlow(); setTab('pledge'); }}
+          pType={pType}
+          setPType={setPType}
+          pDesc={pDesc}
+          setPDesc={setPDesc}
+          pValue={pValue}
+          setPValue={setPValue}
+          pLocality={pLocality}
+          setPLocality={setPLocality}
+          pProcessing={pProcessing}
+          handlePledge={handlePledge}
+          pledges={pledges}
+          payingPledge={payingPledge}
+          setPayingPledge={setPayingPledge}
+        />
       );
     }
 
@@ -660,103 +653,48 @@ export const DonorView: React.FC = () => {
     }
     if (tab === 'give') {
       return (
-        <div className="p-5 space-y-4">
-          <div><h2 className="font-serif text-xl font-bold text-[#111111]">Give Cash</h2><p className="text-[12px] text-[#111111]/50 mt-0.5">Into the blind pool. No recipient chosen.</p></div>
-          <div className="grid grid-cols-2 gap-2">
-            {[1000, 2500, 5000, 10000].map(v => (
-              <button key={v} onClick={() => { setSelected(v); setCustom(''); }} className={'py-3 rounded-xl border text-center font-mono text-sm transition-all ' + (selected === v && !custom ? 'bg-[#1F6B4A] text-white border-[#1F6B4A] font-bold' : 'bg-white border-[#111111]/15 text-[#111111] font-semibold')}>{v.toLocaleString()}</button>
-            ))}
-          </div>
-          <div className="relative">
-            <span className="absolute left-3 top-3 text-[11px] font-mono font-bold text-[#111111]/40">KES</span>
-            <input type="number" value={custom} onChange={e => setCustom(e.target.value)} placeholder="Custom amount" className="w-full bg-white border border-[#111111]/15 rounded-xl pl-12 pr-3 py-3 text-sm font-mono font-bold text-[#111111] focus:ring-2 focus:ring-[#1F6B4A] focus:outline-none" />
-          </div>
-          <div className="space-y-2">
-            <label className="flex items-center gap-3 p-3 bg-white border border-[#111111]/10 rounded-xl cursor-pointer">
-              <input type="checkbox" checked={anon} onChange={e => setAnon(e.target.checked)} className="accent-[#1F6B4A] w-4 h-4" />
-              <div className="flex-1"><div className="text-[13px] font-semibold text-[#111111]">Anonymous</div><div className="text-[11px] text-[#111111]/50">Recommended</div></div>
-            </label>
-            <label className="flex items-center gap-3 p-3 bg-white border border-[#111111]/10 rounded-xl cursor-pointer">
-              <input type="checkbox" checked={ledger} onChange={e => setLedger(e.target.checked)} className="accent-[#1F6B4A] w-4 h-4" />
-              <div className="flex-1"><div className="text-[13px] font-semibold text-[#111111]">Show in recognition ledger</div><div className="text-[11px] text-[#111111]/50">Aggregate * no recipient link</div></div>
-            </label>
-          </div>
-          <button onClick={handleGive} disabled={processing || finalAmount <= 0} className="w-full py-3.5 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-xl text-sm font-medium disabled:opacity-50 mt-2">{processing ? 'Processing...' : `Contribute KES ${finalAmount.toLocaleString()}`}</button>
-
-          <div className="pt-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-mono uppercase tracking-wider text-[#111111]/50">Your donations</h3>
-              <span className="text-[11px] font-mono text-[#111111]/50">{donorContributions.length}</span>
-            </div>
-            {donorContributions.length === 0 ? (
-              <EmptyState Icon={Wallet} title="No donations yet" body="Give above to start your contribution history." />
-            ) : donorContributions.slice(0, 5).map(d => (
-              <div key={d.id} className="p-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-semibold text-[#111111]">KES {d.amount.toLocaleString()}</div>
-                    <div className="text-[11px] font-mono text-[#111111]/50 mt-0.5">{new Date(d.timestamp).toLocaleString()}</div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {d.isAnonymous && <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-[#DCE8E0] text-[#1F6B4A]">Anon</span>}
-                    {d.optInLedger && <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Listed</span>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <GiveFlow
+          showSuccess={false}
+          onCloseSuccess={() => setScreen('tab')}
+          onViewDonations={() => { resetFlow(); setTab('give'); }}
+          finalAmount={finalAmount}
+          selected={selected}
+          setSelected={setSelected}
+          custom={custom}
+          setCustom={setCustom}
+          anon={anon}
+          setAnon={setAnon}
+          ledger={ledger}
+          setLedger={setLedger}
+          processing={processing}
+          handleGive={handleGive}
+          payingDonation={payingDonation}
+          setPayingDonation={setPayingDonation}
+          donorContributions={donorContributions}
+        />
       );
     }
 
     if (tab === 'pledge') {
       return (
-        <div className="p-5 space-y-4">
-          <div><h2 className="font-serif text-xl font-bold text-[#111111]">Pledge Resource</h2><p className="text-[12px] text-[#111111]/50 mt-0.5">Matched by category and locality. Never by name.</p></div>
-          <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => setPType('service_credit')} className={'p-3 rounded-xl border text-left ' + (pType === 'service_credit' ? 'bg-[#1F6B4A] border-[#1F6B4A] text-white' : 'bg-white border-[#111111]/15 text-[#111111]')}><Zap className={'w-4 h-4 mb-1 ' + (pType === 'service_credit' ? 'text-white' : 'text-amber-600')} /><div className="text-xs font-bold">Service Credit</div><div className={'text-[9px] mt-0.5 ' + (pType === 'service_credit' ? 'text-white/70' : 'text-[#111111]/50')}>Pay a bill</div></button>
-            <button onClick={() => setPType('goods')} className={'p-3 rounded-xl border text-left ' + (pType === 'goods' ? 'bg-[#1F6B4A] border-[#1F6B4A] text-white' : 'bg-white border-[#111111]/15 text-[#111111]')}><Package className={'w-4 h-4 mb-1 ' + (pType === 'goods' ? 'text-white' : 'text-blue-600')} /><div className="text-xs font-bold">Surplus Goods</div><div className={'text-[9px] mt-0.5 ' + (pType === 'goods' ? 'text-white/70' : 'text-[#111111]/50')}>Food, blankets</div></button>
-          </div>
-          <div className="space-y-1.5"><label className="text-[11px] font-mono uppercase text-[#111111]/50">Description</label><input value={pDesc} onChange={e => setPDesc(e.target.value)} placeholder={pType === 'service_credit' ? 'Bill up to KES 5,000' : 'e.g. 50kg maize'} className="w-full bg-white border border-[#111111]/15 rounded-xl px-3 py-2.5 text-xs font-mono focus:ring-2 focus:ring-[#1F6B4A] outline-none" /></div>
-          {pType === 'service_credit' && (<div className="space-y-1.5"><label className="text-[11px] font-mono uppercase text-[#111111]/50">Max value (KES)</label><input type="number" value={pValue} onChange={e => setPValue(e.target.value)} placeholder="5000" className="w-full bg-white border border-[#111111]/15 rounded-xl px-3 py-2.5 text-xs font-mono focus:ring-2 focus:ring-[#1F6B4A] outline-none" /></div>)}
-          <div className="space-y-1.5"><label className="text-[11px] font-mono uppercase text-[#111111]/50 flex items-center gap-1"><MapPin className="w-3 h-3" /> Locality</label><select value={pLocality} onChange={e => setPLocality(e.target.value)} className="w-full bg-white border border-[#111111]/15 rounded-xl px-3 py-2.5 text-xs font-mono focus:ring-2 focus:ring-[#1F6B4A] outline-none">{['Nairobi County', 'Mombasa County', 'Kisumu County', 'Nakuru County'].map(c => <option key={c}>{c}</option>)}</select></div>
-          <button onClick={handlePledge} disabled={pProcessing || !pDesc} className="w-full py-3.5 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-xl text-sm font-medium disabled:opacity-50 mt-2">{pProcessing ? 'Submitting...' : 'Submit Pledge'}</button>
-
-          <div className="pt-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-mono uppercase tracking-wider text-[#111111]/50">Your Pledges</h3>
-              <span className="text-[11px] font-mono text-[#111111]/50">{pledges.length}</span>
-            </div>
-            {pledges.length === 0 ? (
-              <EmptyState Icon={Package} title="No pledges yet" body="Submit a pledge above to match with requests." />
-            ) : pledges.map(p => {
-              const statusLabel = p.status === 'awaiting_match' ? 'Awaiting match' : p.status === 'matched' ? 'Matched' : 'Delivered';
-              const statusClass = p.status === 'awaiting_match' ? 'bg-amber-50 text-amber-800 border-amber-200' : p.status === 'matched' ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200';
-              const linkedReqId = (p as any).linked_request_id || (p as any).linkedRequestId;
-              const ref = linkedReqId ? 'REF-' + String(linkedReqId).slice(0, 8).toUpperCase() : null;
-              return (
-                <div key={p.id} className="p-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-1.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[13px] font-semibold text-[#111111] truncate">{p.description}</div>
-                      <div className="text-[11px] font-mono text-[#111111]/50 mt-0.5">{p.locality} · {p.type === 'goods' ? 'Goods' : 'Service credit'}</div>
-                    </div>
-                    <span className={'text-[10px] font-mono uppercase px-1.5 py-0.5 rounded border shrink-0 ' + statusClass}>{statusLabel}</span>
-                  </div>
-                  {ref && p.status === 'settled' && (
-                  <div className="text-[11px] text-emerald-900 pt-1.5 border-t border-emerald-200 flex items-start gap-1.5">
-                    <span className="text-emerald-700 font-bold shrink-0">\u2713</span>
-                    <span>Delivered to <strong>{ref}</strong> \u2014 thank you.</span>
-                  </div>
-                )}
-                {ref && p.status !== 'settled' && (
-                  <div className="text-[11px] font-mono text-[#1F6B4A] pt-1 border-t border-[#111111]/5">Linked to {ref}</div>
-                )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <PledgeFlow
+          showSuccess={false}
+          onCloseSuccess={() => setScreen('tab')}
+          onViewPledges={() => { resetFlow(); setTab('pledge'); }}
+          pType={pType}
+          setPType={setPType}
+          pDesc={pDesc}
+          setPDesc={setPDesc}
+          pValue={pValue}
+          setPValue={setPValue}
+          pLocality={pLocality}
+          setPLocality={setPLocality}
+          pProcessing={pProcessing}
+          handlePledge={handlePledge}
+          pledges={pledges}
+          payingPledge={payingPledge}
+          setPayingPledge={setPayingPledge}
+        />
       );
     }
 
