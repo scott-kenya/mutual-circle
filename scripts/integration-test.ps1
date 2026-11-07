@@ -3,7 +3,6 @@ $backendRoot = Join-Path $root "backend"
 $baseUrl = "http://127.0.0.1:8010"
 
 Write-Host "=== SETUP: kill old server, start fresh ===" -ForegroundColor Cyan
-# Aggressive kill: port listener + any python from our venv
 Get-NetTCPConnection -LocalPort 8010 -State Listen -ErrorAction SilentlyContinue | ForEach-Object {
     try { Stop-Process -Id $_.OwningProcess -Force -ErrorAction Stop } catch {}
 }
@@ -13,7 +12,6 @@ Get-Process python* -ErrorAction SilentlyContinue | Where-Object {
     try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {}
 }
 
-# Wait until port 8000 is truly free (up to 10s)
 $waited = 0
 while ($waited -lt 10) {
     $listener = Get-NetTCPConnection -LocalPort 8010 -State Listen -ErrorAction SilentlyContinue
@@ -25,11 +23,9 @@ if (Get-NetTCPConnection -LocalPort 8010 -State Listen -ErrorAction SilentlyCont
     throw "Port 8000 still occupied after aggressive kill - aborting test"
 }
 
-# Truncate startup logs so we can see THIS run's output
 if (Test-Path "$backendRoot\.test.err") { Clear-Content "$backendRoot\.test.err" -ErrorAction SilentlyContinue }
 if (Test-Path "$backendRoot\.test.log") { Clear-Content "$backendRoot\.test.log" -ErrorAction SilentlyContinue }
 
-# PYTHONPATH is more reliable than --app-dir when spawning via Start-Process
 $env:PYTHONPATH = "$backendRoot\src"
 $proc = Start-Process -FilePath "$backendRoot\.venv\Scripts\python.exe" `
     -ArgumentList "-m","uvicorn","mtc.main:app","--host","127.0.0.1","--port","8010" `
@@ -52,7 +48,6 @@ $start = [System.Diagnostics.Stopwatch]::StartNew()
 }
 
 if ($ready) {
-    # Verify THIS process is the one listening (not a stale one that survived)
     $listener = Get-NetTCPConnection -LocalPort 8010 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($listener) {
         $listenerExe = try { (Get-Process -Id $listener.OwningProcess -ErrorAction Stop).Path } catch { "unknown" }
@@ -74,12 +69,10 @@ if (-not $ready) {
     return
 }
 
-# FIX 1: List[object] instead of fixed-size @()
 $results = [System.Collections.Generic.List[object]]::new()
 
 function Assert {
     param([string]$Name, [bool]$Pass, [string]$Detail = "")
-    # FIX 2: .Add() mutation (works across scope) instead of += assignment
     $null = $results.Add([PSCustomObject]@{ Name = $Name; Pass = $Pass; Detail = $Detail })
     $color = if ($Pass) { "Green" } else { "Red" }
     $icon  = if ($Pass) { "PASS" }  else { "FAIL" }
@@ -187,39 +180,28 @@ $kplcRedemptions = Invoke-Get "/partners/me/redemptions" -Headers @{ "X-Partner-
 $kplcSees = -not $kplcRedemptions.__error -and ($kplcRedemptions.redemptions | Where-Object { $_.id -eq $poolRequestId })
 Assert "A16. KPLC sees dispatched request" ([bool]$kplcSees) $kplcRedemptions.__message
 
-# ============================================================
-# FLOW A2: Collection confirmation
-# ============================================================
 Write-Host ""
 Write-Host "=== FLOW A2: Collection confirmation ===" -ForegroundColor Cyan
 
-# Create a swap request (has PIN, unlike pool requests)
 $collSwapBody = '{"bundle_category":"Standard Pantry","locker_location":"Kibera Hub"}'
 $collSwapResp = Invoke-Post "/requests/swap" -Headers @{ "X-Token" = $requesterToken } -Body $collSwapBody
 Assert "A17. Create swap for collection" (-not $collSwapResp.__error -and $collSwapResp.id -and $collSwapResp.pin) $collSwapResp.__message
 $collSwapId = if ($collSwapResp.id) { $collSwapResp.id } else { "FAIL" }
 $collPin = if ($collSwapResp.pin) { $collSwapResp.pin } else { "FAIL" }
 
-# Wrong PIN -> 403
 $collBad = Invoke-Post "/requests/$collSwapId/collect" -Headers @{ "X-Token" = $requesterToken } -Body '{"pin":"9999"}'
 Assert "A18. Collect wrong PIN -> 403" ($collBad.__error -and $collBad.__status -eq 403) "Expected 403, got $($collBad.__status) / $($collBad.__message)"
 
-# Correct PIN -> 200, status collected
 $collOk = Invoke-Post "/requests/$collSwapId/collect" -Headers @{ "X-Token" = $requesterToken } -Body ('{"pin":"' + $collPin + '"}')
 Assert "A19. Collect correct PIN -> collected" (-not $collOk.__error -and $collOk.status -eq "collected") "Expected collected, got $($collOk.status) / $($collOk.__message)"
 
-# Duplicate collect -> 409
 $collDup = Invoke-Post "/requests/$collSwapId/collect" -Headers @{ "X-Token" = $requesterToken } -Body ('{"pin":"' + $collPin + '"}')
 Assert "A20. Duplicate collect -> 409" ($collDup.__error -and $collDup.__status -eq 409) "Expected 409, got $($collDup.__status)"
 
-# Notification 'collected' created
 $collNotif = Invoke-Get "/notifications/mine" -Headers @{ "X-Token" = $requesterToken }
 $hasCollNotif = -not $collNotif.__error -and ($collNotif.notifications | Where-Object { $_.template -eq "collected" })
 Assert "A21. Notification 'collected' created" ([bool]$hasCollNotif) $collNotif.__message
 
-# ============================================================
-# FLOW A3: PIN-only collection (SMS/USSD/WhatsApp)
-# ============================================================
 Write-Host ""
 Write-Host "=== FLOW A3: PIN-only collection ===" -ForegroundColor Cyan
 
@@ -233,7 +215,6 @@ Assert "A23. POST /requests/collect {pin} -> 200" (-not $pinCollect.__error -and
 $pinDup = Invoke-Post "/requests/collect" -Headers @{ "X-Token" = $requesterToken } -Body ('{"pin":"' + $pinSwapPin + '"}')
 Assert "A24. Second PIN-only collect -> 409" ($pinDup.__error -and $pinDup.__status -eq 409) "Expected 409, got $($pinDup.__status) / $($pinDup.__message)"
 
-# A25: verify pin_hash is written for the fresh swap
 $mineCheck = Invoke-Get "/requests/mine" -Headers @{ "X-Token" = $requesterToken }
 $freshSwap = if (-not $mineCheck.__error) { $mineCheck.requests | Where-Object { $_.id -eq $pinSwap.id } | Select-Object -First 1 } else { $null }
 $freshMd = @{}
@@ -249,13 +230,9 @@ $hashValue = if ($freshMd.pin_hash) { $freshMd.pin_hash } else { "" }
 $hasPinHash = ($hashValue -is [string]) -and ($hashValue.Length -gt 20) -and $hashValue.StartsWith('$2b$')
 Assert "A25. pin_hash written for fresh swap" ([bool]$hasPinHash) "Expected bcrypt hash, got type: $($freshMd.GetType().Name)"
 
-# ============================================================
-# A26-A28: Idempotency-Key support
-# ============================================================
 Write-Host ""
 Write-Host "=== IDEMPOTENCY: duplicate POST protection ===" -ForegroundColor Cyan
 
-# Create a fresh donor hash for this test (so we don't collide with C1-C5)
 $idemDonorHash = "test-idem-" + $runId
 $idemKey = [guid]::NewGuid().ToString()
 $idemDonBody = '{"amount_pence":7777,"is_anonymous":true,"opt_in_ledger":false}'
@@ -265,7 +242,6 @@ $idemPost2 = Invoke-Post "/donations" -Headers @{ "X-Donor-Hash" = $idemDonorHas
 
 Assert "A26. Same Idempotency-Key -> same response ID" (-not $idemPost1.__error -and -not $idemPost2.__error -and $idemPost1.id -and $idemPost1.id -eq $idemPost2.id) "id1=$($idemPost1.id) id2=$($idemPost2.id) err=$($idemPost1.__message)"
 
-# Verify only one row created in DB (via /donations/mine)
 Start-Sleep -Milliseconds 200
 $idemMine = Invoke-Get "/donations/mine" -Headers @{ "X-Donor-Hash" = $idemDonorHash }
 $idemCount = 0
@@ -275,7 +251,6 @@ if (-not $idemMine.__error -and $null -ne $idemMine.donations) {
 if ($null -eq $idemCount) { $idemCount = 0 }
 Assert "A27. Same Idempotency-Key -> only 1 row in DB" ($idemCount -eq 1) "Found $idemCount rows"
 
-# Different key -> two rows
 $idemKey2 = [guid]::NewGuid().ToString()
 $idemPost3 = Invoke-Post "/donations" -Headers @{ "X-Donor-Hash" = $idemDonorHash; "Idempotency-Key" = $idemKey2 } -Body $idemDonBody
 Start-Sleep -Milliseconds 200
@@ -283,9 +258,6 @@ $idemMine2 = Invoke-Get "/donations/mine" -Headers @{ "X-Donor-Hash" = $idemDono
 $idemMatches2 = if ($idemMine2.__error) { @() } else { @($idemMine2.donations | Where-Object { $_.amount_pence -eq 7777 }) }
 Assert "A28. Different Idempotency-Key -> 2 rows" ($idemMatches2.Count -eq 2) "Found $($idemMatches2.Count) rows"
 
-# ============================================================
-# A29-A33: Pledge -> Request linkage + auto-settle on collect
-# ============================================================
 Write-Host ""
 Write-Host "=== PLEDGE LINKAGE ===" -ForegroundColor Cyan
 
@@ -325,7 +297,6 @@ if (-not $plMine2.__error -and $plMine2.pledges) {
 $pStatus2 = if ($settledPledge) { if ($settledPledge.status) { $settledPledge.status } else { $settledPledge.Status } } else { "NONE" }
 Assert "A33. Pledge auto-settled after collect" ($pStatus2 -eq "settled") "status=$pStatus2"
 
-# A34: verify /pledges/mine exposes linked_request_id (the field the donor UI uses to show REF)
 $plMine3 = Invoke-Get "/pledges/mine" -Headers @{ "X-Donor-Hash" = $donorHash }
 $plFinal = $null
 if (-not $plMine3.__error -and $plMine3.pledges) {

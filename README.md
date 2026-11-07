@@ -42,6 +42,7 @@ See `docs/deploy.md` for the full walkthrough. Short version:
 
 ### Frontend
 
+    cd frontend
     npm install
     npm run dev
 

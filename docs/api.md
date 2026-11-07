@@ -1,4 +1,4 @@
-# Mutual Circle API — Developer Reference
+# Mutual Circle API Â— Developer Reference
 
 Complete reference for building against the Mutual Circle backend.
 

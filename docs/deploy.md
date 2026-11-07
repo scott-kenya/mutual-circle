@@ -21,10 +21,11 @@ Frontend on GitHub Pages. Backend on any ASGI host. Database on Neon Postgres.
 Wait for "Application startup complete." Leave running.
 
 ### Frontend (second terminal)
+    cd frontend
     npm install --legacy-peer-deps
     npm run dev
 
-Open http://localhost:3000/mutual-circle/ — the /mutual-circle/ suffix is intentional (see vite.config.ts base).
+Open http://localhost:3000/mutual-circle/ — the /mutual-circle/ suffix is intentional (see frontend/vite.config.ts base).
 
 ### Integration test (third terminal)
 Stop demo backend first — the test kills all venv python during setup.
@@ -126,25 +127,20 @@ ALTER or CREATE that drifted. Fix 000_baseline to match, re-run
 ## Frontend deployment (GitHub Pages)
 
 .github/workflows/deploy.yml runs on every push to main:
-checkout -> Node 20 -> npm install --legacy-peer-deps -> npm run build -> copy dist/index.html to 404.html (SPA fallback) -> deploy-pages.
+checkout -> Node 20 -> npm install --legacy-peer-deps in frontend/ -> npm run build -> copy frontend/dist/index.html to 404.html (SPA fallback) -> deploy-pages.
 
 Live site: https://<owner>.github.io/mutual-circle/
 
-### CRITICAL: VITE_API_URL is not set in CI
+### VITE_API_URL in CI
 
-src/lib/apiClient.ts line 4:
+frontend/src/lib/apiClient.ts:
     const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8000';
 
-VITE_API_URL is baked in at build time. The current workflow does not set it — meaning the deployed GitHub Pages frontend points at 127.0.0.1:8000, which fails from any browser not running the backend on the same machine.
+VITE_API_URL is baked in at build time. The deploy workflow passes the `VITE_API_URL` repository secret to the build. If the secret is unset, the build warns and the frontend falls back to 127.0.0.1:8000, which won't work for remote users.
 
-Fix:
-1. Add to .github/workflows/deploy.yml build step:
-       - name: Build
-         run: npm run build
-         env:
-           VITE_API_URL: ${{ secrets.VITE_API_URL }}
-2. Add VITE_API_URL as a repo secret (Settings -> Secrets and variables -> Actions).
-3. Backend CORS allow_origins must include the GitHub Pages origin.
+To configure deployment:
+1. Add `VITE_API_URL` as a repository secret (Settings -> Secrets and variables -> Actions).
+2. Ensure backend CORS `allow_origins` includes the GitHub Pages origin.
 
 ## Backend deployment
 

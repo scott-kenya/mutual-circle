@@ -26,7 +26,8 @@ See `README.md` > "Quick start". Summary:
 - `pip install pytest pytest-asyncio`
 - `cp .env.example .env` then fill in real values
 
-**Frontend** (from repo root):
+**Frontend:**
+- `cd frontend`
 - `npm install --legacy-peer-deps`
 
 You need a Postgres instance (Neon or local) for the full backend.
@@ -37,7 +38,7 @@ You need a Postgres instance (Neon or local) for the full backend.
 The CI gate runs on every push. Locally, run the same three checks
 first:
 
-From repo root:
+From `frontend/`:
 - `npm run lint` (TypeScript — must be 0 errors)
 - `npm run build` (Vite production build)
 
@@ -50,7 +51,7 @@ need `DATABASE_URL_MAIN` set. Run them locally with `pytest tests/ -v`.
 ## Code style
 
 **Frontend:** TypeScript, functional React, Tailwind for styling.
-No CSS-in-JS. Match existing component structure in `src/components/`.
+No CSS-in-JS. Match existing component structure in `frontend/src/components/`.
 
 **Backend:** Python 3.11+, FastAPI, asyncpg. Ruff and mypy are
 configured in `backend/pyproject.toml` but not yet enforced in CI.
