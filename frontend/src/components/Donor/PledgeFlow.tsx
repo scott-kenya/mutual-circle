@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Check, Package, Zap, MapPin } from 'lucide-react';
+import { Check, Package, MapPin, Handshake } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { EmptyState } from '../Shared/EmptyState';
@@ -99,7 +99,7 @@ export const PledgeFlow: React.FC<PledgeFlowProps> = (props) => {
             props.pType === 'service_credit' ? 'bg-pine border-pine text-white' : 'bg-canvas border-tile text-ink'
           }`}
         >
-          <Zap className={`w-5 h-5 mb-2 ${props.pType === 'service_credit' ? 'text-white' : 'text-amber-600'}`} />
+          <Handshake className={`w-5 h-5 mb-2 ${props.pType === 'service_credit' ? 'text-white' : 'text-amber-600'}`} />
           <div className="text-sm font-bold">Service Credit</div>
           <div className={`text-xs mt-1 ${props.pType === 'service_credit' ? 'text-white/70' : 'text-muted'}`}>Pay a bill</div>
         </button>
