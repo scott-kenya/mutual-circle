@@ -57,6 +57,7 @@ export const RequesterView: React.FC = () => {
   const [payingRequest, setPayingRequest] = useState<{ id: string; amount: number } | null>(null);
 
   const [intakeStep, setIntakeStep] = useState<IntakeStep>('phone');
+  const [isScrolled, setIsScrolled] = useState(false);
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [householdStep, setHouseholdStep] = useState<boolean>(false);
@@ -379,118 +380,6 @@ export const RequesterView: React.FC = () => {
     return { total, dispatched, pending, totalValue };
   })();
 
-  if (!tokenHash) {
-    const renderPhoneStep = () => (
-      <>
-        <div className="text-center space-y-3">
-          <div className="w-14 h-14 bg-[#DCE8E0] text-[#1F6B4A] rounded-2xl flex items-center justify-center mx-auto"><HeartHandshake className="w-7 h-7" /></div>
-          <div><h1 className="font-serif text-2xl font-bold text-[#111111]">Mutual Circle</h1><p className="text-[10px] font-mono text-[#1F6B4A] uppercase tracking-widest mt-1">Web Portal</p></div>
-          <p className="text-xs text-[#111111]/60 leading-relaxed">Food, bills, tuition. Anonymous from the first tap.</p>
-        </div>
-        <form onSubmit={handleSendOtp} className="space-y-3">
-          <div>
-            <label className="text-[10px] font-mono uppercase text-[#111111]/50">Phone number</label>
-            <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setPhoneError(null); }} placeholder="+254 7XX XXX XXX" autoFocus required className="w-full bg-white border border-[#111111]/15 rounded-xl px-3 py-3 text-sm font-mono focus:ring-2 focus:ring-[#1F6B4A] focus:outline-none mt-1" />
-          </div>
-          {phoneError && (
-            <div className="text-[10px] text-rose-600 flex items-center gap-1 -mt-1">
-              <AlertCircle className="w-3 h-3 shrink-0" />
-              <span>{phoneError}</span>
-            </div>
-          )}
-          <button type="submit" disabled={!phone} className="w-full py-3 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-xl text-sm font-medium disabled:opacity-50">Send verification code</button>
-        </form>
-        <div className="p-3 bg-white border border-[#111111]/10 rounded-xl flex items-start gap-2"><Shield className="w-3 h-3 text-[#1F6B4A] shrink-0 mt-0.5" /><p className="text-[10px] text-[#111111]/60 leading-relaxed">Phone is hashed immediately after verification. Staff see only a token.</p></div>
-      </>
-    );
-
-    const renderOtpStep = () => (
-      <>
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 bg-[#DCE8E0] text-[#1F6B4A] rounded-2xl flex items-center justify-center mx-auto"><MessageSquare className="w-7 h-7" /></div>
-          <div>
-            <h1 className="font-serif text-xl font-bold text-[#111111]">Verify your number</h1>
-            <p className="text-[11px] text-[#111111]/60 mt-1">We sent a 4-digit code to <strong className="font-mono text-[#111111]">{maskPhone(phone)}</strong></p>
-          </div>
-        </div>
-
-        <div className="p-3 bg-amber-50 border-2 border-dashed border-amber-400 rounded-xl text-center">
-          <div className="text-[9px] font-mono uppercase text-amber-700 tracking-wider font-bold">Demo code</div>
-          <div className="font-mono text-2xl font-bold text-amber-900 tracking-[0.4em] mt-0.5">{generatedOtp}</div>
-          <div className="text-[8px] text-amber-700/70 mt-1">In production this arrives via SMS</div>
-        </div>
-
-        <form onSubmit={handleVerifyOtp} className="space-y-2">
-          <input
-            value={otpInput}
-            onChange={e => { setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 4)); setOtpError(null); }}
-            placeholder=""
-            inputMode="numeric"
-            maxLength={4}
-            autoFocus
-            disabled={otpAttempts >= MAX_OTP_ATTEMPTS || otpProcessing}
-            className={'w-full text-center font-mono text-2xl tracking-[0.5em] py-3 bg-white border-2 rounded-xl outline-none transition-colors ' + (otpError ? 'border-rose-300 focus:border-rose-500' : 'border-[#111111]/20 focus:border-[#1F6B4A]') + ' disabled:opacity-50'}
-          />
-          {otpError && (
-            <div className="text-[10px] text-rose-600 flex items-center gap-1 justify-center">
-              <AlertCircle className="w-3 h-3" />{otpError}
-            </div>
-          )}
-          <button type="submit" disabled={otpInput.length !== 4 || otpProcessing || otpAttempts >= MAX_OTP_ATTEMPTS} className="w-full py-3 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-xl text-sm font-medium disabled:opacity-50">
-            {otpProcessing ? 'Verifying...' : 'Verify & continue'}
-          </button>
-        </form>
-
-        <div className="text-center text-[10px] text-[#111111]/50">
-          {resendCooldown > 0 ? (
-            <span>Resend code in {resendCooldown}s</span>
-          ) : (
-            <button type="button" onClick={handleResend} className="text-[#1F6B4A] hover:underline font-medium">Resend code</button>
-          )}
-        </div>
-
-        <button type="button" onClick={handleBackToPhone} className="w-full text-center text-[10px] text-[#111111]/40 hover:text-[#111111] flex items-center justify-center gap-1">
-          <ArrowLeft className="w-3 h-3" /> Use a different number
-        </button>
-      </>
-    );
-
-    return (
-      <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6">
-        <div className="w-full max-w-[340px] bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black shrink-0">
-          <div className="bg-[#FAF8F4] rounded-[2rem] overflow-hidden flex flex-col h-[620px]">
-            <div className="px-5 pt-3 pb-1 flex items-center justify-between text-[10px] font-medium text-[#111111]/60">
-              <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              <span className="text-[8px] font-mono bg-[#DCE8E0] text-[#1F6B4A] px-1.5 py-0.5 rounded uppercase font-bold">Anonymous</span>
-            </div>
-            <div className="flex-1 flex flex-col justify-center px-6 space-y-5 overflow-y-auto">
-              {intakeStep === 'phone' ? renderPhoneStep() : renderOtpStep()}
-            </div>
-            <div className="p-3 text-center text-[9px] text-[#111111]/40 font-mono border-t border-[#111111]/10">Prefer SMS, USSD, or WhatsApp? Use the top navigation.</div>
-          </div>
-        </div>
-        <div className="w-full max-w-sm space-y-3">
-          <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-2">
-            <h3 className="text-sm font-bold text-[#111111] flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-[#1F6B4A]" /> How it works</h3>
-            <div className="space-y-1.5 text-[10px] text-[#111111]/70">
-              {[
-                'Enter any phone number',
-                'Receive a 4-digit verification code (simulated)',
-                'Token is generated on verification (HMAC)',
-                'Raw phone is never stored - only the token',
-                'Your history persists per token, even after refresh',
-              ].map((s, i) => (
-                <div key={s} className="flex gap-2"><span className="font-mono text-[#1F6B4A] font-bold shrink-0">{i + 1}.</span><span>{s}</span></div>
-              ))}
-            </div>
-          </div>
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[10px] text-amber-900 leading-relaxed">
-            <strong>Demo note:</strong> the verification code is displayed on screen. In production it arrives via SMS.
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const renderHome = () => (
     <RequesterHome
@@ -631,25 +520,6 @@ export const RequesterView: React.FC = () => {
     );
   }
 
-  if (!tokenHash) {
-    return (
-      <RequesterIntake
-        intakeStep={intakeStep}
-        phone={phone}
-        setPhone={setPhone}
-        phoneError={phoneError}
-        otpInput={otpInput}
-        setOtpInput={setOtpInput}
-        otpError={otpError}
-        otpProcessing={otpProcessing}
-        resendCooldown={resendCooldown}
-        handleSendOtp={handleSendOtp}
-        handleVerifyOtp={handleVerifyOtp}
-        handleResend={handleResend}
-        handleBackToPhone={handleBackToPhone}
-      />
-    );
-  }
 
   if (householdStep) {
     return renderHouseholdStep();
@@ -684,7 +554,6 @@ export const RequesterView: React.FC = () => {
     { id: 'home', label: 'Home', Icon: Home }, { id: 'swap', label: 'Swap', Icon: Package }, { id: 'pool', label: 'Pool', Icon: CreditCard }, { id: 'match', label: 'Match', Icon: Users }, { id: 'bench', label: 'Bench', Icon: MessageCircle },
   ];
 
-  const [isScrolled, setIsScrolled] = useState(false);
 
   return (
     <div className="w-full flex flex-col gap-6">
