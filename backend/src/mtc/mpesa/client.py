@@ -134,6 +134,31 @@ async def initiate_stk_push(
     Callers must persist ``checkout_request_id`` — it is the only way to
     match the callback back to the request row.
     """
+    if not settings.mpesa_shortcode or not settings.mpesa_passkey or not settings.mpesa_callback_url:
+        raise RuntimeError(
+            "MPESA_SHORTCODE / MPESA_PASSKEY / MPESA_CALLBACK_URL not configured"
+        )
+
+    normalized = _normalize_phone(phone)
+    amount_kes = _pence_to_kes(amount_pence)
+    ts = _timestamp()
+    pw = _password(settings.mpesa_shortcode, settings.mpesa_passkey, ts)
+    token = await _get_access_token()
+
+    body = {
+        "BusinessShortCode": settings.mpesa_shortcode,
+        "Password": pw,
+        "Timestamp": ts,
+        "TransactionType": settings.mpesa_transaction_type,
+        "Amount": amount_kes,
+        "PartyA": normalized,
+        "PartyB": settings.mpesa_shortcode,
+        "PhoneNumber": normalized,
+        "CallBackURL": settings.mpesa_callback_url,
+        "AccountReference": account_ref[:12],
+        "TransactionDesc": description[:13],
+    }
+
     url = f"{_base_url()}/mpesa/stkpush/v1/processrequest"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(
