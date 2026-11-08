@@ -29,6 +29,7 @@ TEMPLATES = {
     "collected":       "Mutual Circle: Bundle collected. Thank you.",
     "pool_collected":  "Mutual Circle: Your bill was paid at {partner}. Ref: {ref}. Thank you.",
     "pool_fulfilled":  "Mutual Circle: Payment confirmed by {partner}. Ref: {ref}. Thank you.",
+    "evidence_rejected": "Mutual Circle: Your request {ref} could not be verified. Reason: {reason}. Please try again with a clearer photo.",
 }
 
 

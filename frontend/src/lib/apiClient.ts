@@ -472,3 +472,51 @@ export const uploadPoolEvidence = async (
     return null;
   }
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tier 2 photo evidence review (Console / audit role)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const listEvidenceQueue = (sessionToken: string) =>
+  call<{ requests: any[] }>('/audit/evidence-queue', {
+    headers: { Authorization: `Bearer ${sessionToken}` },
+  });
+
+export const approveEvidence = (sessionToken: string, requestId: string) =>
+  call<{ request_id: string; status: string }>(`/audit/evidence/${requestId}/approve`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${sessionToken}` },
+  });
+
+export const rejectEvidence = (sessionToken: string, requestId: string, reason: string) =>
+  call<{ request_id: string; status: string; reason: string }>(
+    `/audit/evidence/${requestId}/reject`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${sessionToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ reason }),
+    },
+  );
+
+export const fetchEvidencePhoto = async (
+  sessionToken: string,
+  requestId: string,
+): Promise<string | null> => {
+  try {
+    const res = await fetch(`${BASE}/audit/evidence/${requestId}/photo`, {
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    });
+    if (!res.ok) {
+      console.error(`[api] evidence-photo HTTP ${res.status}`);
+      return null;
+    }
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  } catch (e) {
+    console.error("[evidence-photo]", e);
+    return null;
+  }
+};
