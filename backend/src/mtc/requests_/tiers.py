@@ -23,7 +23,18 @@ def assign_tier(category: Category, amount_pence: int) -> Tier:
 
 
 def initial_status(tier: Tier) -> str:
-    """Tier 3 requires OCR before dispatch. Other tiers auto-verify."""
+    """Tier 2 requires photo evidence; Tier 3+ requires OCR; others auto-verify.
+
+    R.U.T.H 4.3: object-level verification. External lookup is
+    unconfirmed (section 8 item 2), so the fallback is a photo of the bill
+    uploaded by the requester + automated plausibility checks in Console
+    review. Tier 2 rows stay in pending_evidence until the photo arrives,
+    then transition to pending_check for staff review.
+
+    Tier 1 (swap bundles) and Tier 3+ behaviour unchanged.
+    """
     if tier >= 3:
         return "pending_check"
+    if tier == 2:
+        return "pending_evidence"
     return "verified"

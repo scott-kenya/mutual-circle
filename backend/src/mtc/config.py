@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     at_username: str = "sandbox"
     at_api_key: str = ""
     at_sender_id: str = ""
+    # Tier 2 photo evidence (R.U.T.H §4.3 fallback path)
+    evidence_storage_dir: str = "uploads/evidence"
+    evidence_max_size_mb: int = 5
 
     staff_enrol_id: str = ""
     staff_enrol_pin_hash: str = ""

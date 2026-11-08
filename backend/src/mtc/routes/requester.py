@@ -1,5 +1,7 @@
 """Requester routes — token-authenticated via X-Token header."""
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, UploadFile, File
+from fastapi.responses import FileResponse
+from pathlib import Path
 import re
 
 from pydantic import BaseModel, Field, model_validator
@@ -9,6 +11,7 @@ import logging
 import asyncpg
 
 from mtc import idempotency
+from mtc.config import settings
 from mtc.mpesa.client import initiate_stk_push
 from mtc.db.main import get_conn
 from mtc.rate_limit.counter import RateLimitExceeded, consume_quota, check_ip_rate_limit
@@ -487,3 +490,121 @@ async def _settle_pledge_for_request(conn: asyncpg.Connection, request_id: str) 
             "UPDATE pledges SET status = 'settled' WHERE id = $1 AND status = 'matched'",
             str(pledge_id),
         )
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Tier 2 photo evidence (R.U.T.H §4.3 fallback path)
+# ═══════════════════════════════════════════════════════════════════════════
+
+_ALLOWED_EVIDENCE_MIME = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "application/pdf": ".pdf",
+}
+
+# Storage root: backend/uploads/evidence
+# Path math: this file → mtc/routes/requester.py → parent.parent.parent.parent → backend/
+_BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_EVIDENCE_DIR = _BACKEND_ROOT / settings.evidence_storage_dir
+
+
+@router.post("/pool/{request_id}/evidence")
+async def upload_pool_evidence(
+    request_id: str,
+    file: UploadFile = File(...),
+    token: str = Depends(require_token),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    """Upload bill photo evidence for a Tier 2 pool request.
+
+    R.U.T.H §4.3: external object lookup is unconfirmed (§8 item 2),
+    so photo evidence is the current fallback for existence
+    verification. Only Tier 2 requests in status='pending_evidence'
+    accept a photo. On success, status moves to 'pending_check' for
+    staff review in Console.
+    """
+    row = await conn.fetchrow(
+        "SELECT id, token_hash, tier, status, type FROM requests WHERE id = $1",
+        request_id,
+    )
+    if row is None:
+        raise HTTPException(404, "Request not found")
+    if row["token_hash"] != token:
+        raise HTTPException(403, "Not your request")
+    if row["type"] != "pool":
+        raise HTTPException(400, "Only pool requests accept evidence")
+    if row["tier"] != 2:
+        raise HTTPException(400, "Only Tier 2 requests require photo evidence")
+    if row["status"] != "pending_evidence":
+        raise HTTPException(
+            409,
+            f"Request is in status '{row['status']}', not awaiting evidence",
+        )
+
+    mime = (file.content_type or "").lower()
+    if mime not in _ALLOWED_EVIDENCE_MIME:
+        raise HTTPException(
+            415,
+            f"Unsupported file type '{mime}'. Allowed: jpeg, png, pdf.",
+        )
+    ext = _ALLOWED_EVIDENCE_MIME[mime]
+
+    contents = await file.read()
+    max_bytes = settings.evidence_max_size_mb * 1024 * 1024
+    if len(contents) > max_bytes:
+        raise HTTPException(
+            413,
+            f"File too large ({len(contents)} bytes). Max {max_bytes} bytes "
+            f"({settings.evidence_max_size_mb} MB).",
+        )
+    if len(contents) < 1024:
+        raise HTTPException(400, "File too small — likely empty or corrupt")
+
+    _EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
+    filename = f"{request_id}{ext}"
+    full_path = _EVIDENCE_DIR / filename
+    full_path.write_bytes(contents)
+
+    await conn.execute(
+        "UPDATE requests "
+        "SET evidence_photo_path = $1, evidence_submitted_at = now(), "
+        "    status = 'pending_check', updated_at = now() "
+        "WHERE id = $2",
+        filename, request_id,
+    )
+
+    logger.info(
+        "Tier 2 evidence uploaded for request %s: %s (%d bytes, %s)",
+        request_id, filename, len(contents), mime,
+    )
+
+    return {
+        "ok": True,
+        "request_id": request_id,
+        "status": "pending_check",
+        "filename": filename,
+    }
+
+
+@router.get("/pool/{request_id}/evidence")
+async def get_pool_evidence(
+    request_id: str,
+    token: str = Depends(require_token),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    """Serve the evidence photo back to the requester who uploaded it."""
+    row = await conn.fetchrow(
+        "SELECT token_hash, evidence_photo_path FROM requests WHERE id = $1",
+        request_id,
+    )
+    if row is None:
+        raise HTTPException(404, "Request not found")
+    if row["token_hash"] != token:
+        raise HTTPException(403, "Not your request")
+    if not row["evidence_photo_path"]:
+        raise HTTPException(404, "No evidence uploaded for this request")
+
+    full_path = _EVIDENCE_DIR / row["evidence_photo_path"]
+    if not full_path.exists():
+        raise HTTPException(404, "Evidence file missing on disk")
+
+    return FileResponse(full_path)
