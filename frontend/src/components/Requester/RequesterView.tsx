@@ -643,27 +643,36 @@ export const RequesterView: React.FC = () => {
     { id: 'home', label: 'Home', Icon: Home }, { id: 'swap', label: 'Swap', Icon: Package }, { id: 'pool', label: 'Pool', Icon: CreditCard }, { id: 'match', label: 'Match', Icon: Users }, { id: 'bench', label: 'Bench', Icon: MessageCircle },
   ];
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
   return (
-    <div className="flex justify-center p-4">
-      <div className="w-full max-w-[420px] bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black shrink-0">
-        <div className="bg-[#FAF8F4] rounded-[2rem] overflow-hidden flex flex-col h-[640px]">
-          <div className="px-5 pt-3 pb-1 flex items-center justify-between text-[10px] font-medium text-[#111111]/60"><span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span><span className="text-[8px] font-mono bg-[#DCE8E0] text-[#1F6B4A] px-1.5 py-0.5 rounded uppercase font-bold">Anonymous</span></div>
-          <div className="px-5 pb-2 border-b border-[#111111]/10 flex items-center justify-between"><div className="flex items-center gap-2"><div className="w-8 h-8 bg-[#1F6B4A] rounded-xl flex items-center justify-center"><HeartHandshake className="w-4 h-4 text-white" /></div><div><div className="text-xs font-bold text-[#111111] leading-tight">Mutual Circle</div><div className="text-[9px] text-[#111111]/40 font-mono truncate max-w-[150px]">{tokenHash}</div></div></div><div className="flex items-center gap-1">
-      <button onClick={() => setTab('messages')} className={'relative p-1 rounded ' + (tab === 'messages' ? 'text-[#1F6B4A]' : 'text-[#111111]/40 hover:text-[#1F6B4A]')} aria-label="Messages" title="Messages">
-        <Bell className="w-4 h-4" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] bg-rose-600 text-white text-[8px] font-bold rounded-full flex items-center justify-center px-0.5">{unreadCount > 9 ? '9+' : unreadCount}</span>
-        )}
-      </button>
-      <button onClick={() => setTab('settings')} className={'relative p-1 rounded ' + (tab === 'settings' ? 'text-[#1F6B4A]' : 'text-[#111111]/40 hover:text-[#1F6B4A]')} aria-label="Settings" title="Settings"><Settings className="w-4 h-4" /></button>
-      <button onClick={logout} className="text-[#111111]/40 hover:text-rose-600 p-1 rounded" aria-label="End session" title="End session"><LogOut className="w-4 h-4" /></button>
-    </div></div>
-          <div key={tab} className="flex-1 overflow-y-auto animate-in fade-in duration-200">{renderContent()}</div>
-          <div className="border-t border-[#111111]/10 bg-white"><div className="grid grid-cols-5">{TABS.map(t => { const I = t.Icon; const active = tab === t.id; return (<button key={t.id} onClick={() => goTab(t.id)} className={'py-2.5 flex flex-col items-center gap-1 ' + (active ? 'text-[#1F6B4A]' : 'text-[#111111]/40')}><div className={'px-3 py-1 rounded-full transition-colors ' + (active ? 'bg-[#DCE8E0]' : '')}><I className="w-4 h-4" /></div><span className="text-[9px] font-medium">{t.label}</span></button>); })}</div></div>
+    <div className="w-full flex flex-col gap-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-ink">Mutual Circle</h1>
+          <p className="text-sm text-muted font-mono mt-1">
+            {tokenHash ? `Token: ${tokenHash.slice(0, 12)}...` : 'Anonymous'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setTab('messages')} className="relative p-2 rounded-full hover:bg-tint transition-colors bg-surface border border-tile shadow-sm">
+            <Bell className="w-5 h-5 text-ink" />
+            {unreadCount > 0 && <span className="absolute top-0 right-0 min-w-[16px] h-[16px] bg-rose-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+          </button>
+          <button onClick={() => setTab('settings')} className="p-2 rounded-full hover:bg-tint transition-colors bg-surface border border-tile shadow-sm">
+            <Settings className="w-5 h-5 text-ink" />
+          </button>
+          <button onClick={logout} className="p-2 rounded-full hover:bg-rose-50 transition-colors bg-surface border border-tile shadow-sm">
+            <LogOut className="w-5 h-5 text-ink" />
+          </button>
         </div>
       </div>
 
-
+      {/* Main Content (from renderContent) */}
+      <main className="w-full">
+        {renderContent()}
+      </main>
       
       {payingRequest && (
         <MpesaModal mode="request" targetId={payingRequest.id} amount={payingRequest.amount} onClose={() => setPayingRequest(null)} />

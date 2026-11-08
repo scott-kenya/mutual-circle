@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SmsDonorSimulator } from './SmsDonorSimulator';
 import { GiveFlow } from './GiveFlow';
+import { DonorHome } from './DonorHome';
 import { PledgeFlow } from './PledgeFlow';
 import { DonorActivityModal } from './DonorActivityModal';
 import { getDonorLeaderboard, getDonorProfile, updateDonorProfile, getImpactStats, getDistribution, getPublicPartners, getPublicLedger, downloadPublicLedgerCsv } from '../../lib/apiClient';
@@ -432,223 +433,26 @@ export const DonorView: React.FC = () => {
     }
 
     if (tab === 'home') {
-      const hasActivity = activityFeed.length > 0;
       return (
-        <div className="p-5 space-y-4">
-          <div className="rounded-2xl bg-gradient-to-br from-[#1F6B4A] to-[#18553a] p-5 text-white space-y-2">
-            <div className="flex items-center justify-between">
-              <HeartHandshake className="w-6 h-6 text-white/80" />
-              <button onClick={openLedgerModal} className="text-[10px] font-mono uppercase tracking-wider text-white/70 hover:text-white underline flex items-center gap-1" title="Verify public ledger">
-                <ShieldCheck className="w-3 h-3" /> Verify ledger
-              </button>
-            </div>
-            {hasActivity ? (
-              <>
-                <h2 className="font-bold leading-tight flex items-baseline gap-1.5 flex-wrap"><span className="text-[11px] font-mono text-[#111111]/50">KES</span><span className="text-2xl font-serif tabular-nums text-[#111111]">{totalGivenKes.toLocaleString()}</span><span className="text-sm font-serif text-[#111111]/60 font-normal">pooled</span></h2>
-                <p className="text-[13px] text-white/70 leading-relaxed">
-                  {impactStats
-                    ? impactStats.bundles_delivered + ' bundles delivered \u00b7 ' + impactStats.utility_meters_paid + ' bills paid \u00b7 ' + impactStats.student_terms_paid + ' school terms funded. You are one of the donors behind these.'
-                    : 'Across ' + donorContributions.length + ' gift' + (donorContributions.length !== 1 ? 's' : '') + '. Blind-pooled. No recipient link.'}
-                </p>
-              </>
-            ) : (
-              <>
-                <h2 className="font-serif text-xl font-bold leading-tight">Fund a need.<br />Stay anonymous.</h2>
-                <p className="text-[13px] text-white/70 leading-relaxed">Blind-pooled. No recipient profiles. No linkage.</p>
-              </>
-            )}
-          </div>
-
-          {hasActivity && (
-            <div className="p-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-2">
-              <div className="flex items-center gap-1.5">
-                <Lock className="w-4 h-4 text-[#1F6B4A]" />
-                <div className="text-[11px] font-mono uppercase tracking-wider text-[#111111]/50">Privacy</div>
-              </div>
-              <div className="space-y-1 text-[10px] font-mono">
-                <div className="flex justify-between"><span className="text-[#111111]/50">Ledger name</span><span className="font-semibold text-[#111111]">{myProfile?.display_name || 'Anonymous'}</span></div>
-                <div className="flex justify-between"><span className="text-[#111111]/50">Public ledger</span><span className={'font-semibold ' + (myProfile?.opt_in_ledger ? 'text-emerald-700' : 'text-[#111111]/60')}>{myProfile?.opt_in_ledger ? 'Listed' : 'Not listed'}</span></div>
-                <div className="flex justify-between"><span className="text-[#111111]/50">Last gift</span><span className={'font-semibold ' + (donorContributions[0]?.isAnonymous ? 'text-emerald-700' : 'text-[#111111]')}>{donorContributions[0] ? (donorContributions[0].isAnonymous ? 'Anonymous' : 'Named') : '—'}</span></div>
-              </div>
-            </div>
-          )}
-
-          {hasActivity && impactStats && (
-            <div className="p-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-2">
-              <div className="flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4 text-[#1F6B4A]" />
-                <div className="text-[11px] font-mono uppercase tracking-wider text-[#111111]/50">Since your last visit</div>
-              </div>
-              {impactDelta === null ? (
-                <div className="text-[12px] text-[#111111]/60 leading-relaxed">First visit — current totals: {impactStats.bundles_delivered} bundles delivered, {impactStats.utility_meters_paid} meters paid, {impactStats.student_terms_paid} terms funded.</div>
-              ) : impactDelta === undefined ? (
-                <div className="text-[11px] text-[#111111]/50">Loading…</div>
-              ) : (
-                <div className="space-y-1 text-[10px] font-mono">
-                  <div className="flex justify-between"><span className="text-[#111111]/50">Bundles delivered</span><span className={'font-bold ' + (impactDelta.bundles > 0 ? 'text-emerald-700' : 'text-[#111111]/40')}>{impactDelta.bundles > 0 ? '+' + impactDelta.bundles : '—'}</span></div>
-                  <div className="flex justify-between"><span className="text-[#111111]/50">Utility meters paid</span><span className={'font-bold ' + (impactDelta.utilities > 0 ? 'text-emerald-700' : 'text-[#111111]/40')}>{impactDelta.utilities > 0 ? '+' + impactDelta.utilities : '—'}</span></div>
-                  <div className="flex justify-between"><span className="text-[#111111]/50">Student terms paid</span><span className={'font-bold ' + (impactDelta.terms > 0 ? 'text-emerald-700' : 'text-[#111111]/40')}>{impactDelta.terms > 0 ? '+' + impactDelta.terms : '—'}</span></div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {hasActivity && (
-            <button onClick={handleDownloadDonations} className="w-full py-2.5 px-3 bg-[#FAF8F4] hover:bg-[#f0ede4] border border-[#111111]/10 rounded-xl text-[10px] font-mono uppercase tracking-wider text-[#111111]/60 flex items-center justify-center gap-1.5">
-              <Package className="w-3 h-3" /> Download my donations ({donorContributions.length} gift{donorContributions.length !== 1 ? 's' : ''})
-            </button>
-          )}
-
-          {hasActivity && (
-            <div className="grid grid-cols-3 gap-2">
-              <div className="p-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl">
-                <div className="text-[11px] font-mono uppercase text-[#111111]/50 tracking-wider">Total given</div>
-                <div className="font-mono text-sm font-bold text-[#1F6B4A] mt-0.5">KES {totalGivenKes.toLocaleString()}</div>
-              </div>
-              <div className="p-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl">
-                <div className="text-[11px] font-mono uppercase text-[#111111]/50 tracking-wider">Gifts</div>
-                <div className="font-mono text-sm font-bold text-[#111111] mt-0.5">{donorContributions.length}</div>
-              </div>
-              <div className="p-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl">
-                <div className="text-[11px] font-mono uppercase text-[#111111]/50 tracking-wider">Pledges</div>
-                <div className="font-mono text-sm font-bold text-amber-700 mt-0.5">{pledges.length}</div>
-              </div>
-            </div>
-          )}
-
-          {activeClosures.length > 0 && (
-            <div className="space-y-2">
-              {activeClosures.map(c => (
-                <div key={c.id} className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="text-[12px] font-bold text-emerald-900 flex items-center gap-1"><Check className="w-3 h-3" /> Campaign closed</div>
-                    <button
-                      onClick={() => {
-                        const next = new Set(dismissedClosures);
-                        next.add(c.id);
-                        setDismissedClosures(next);
-                      }}
-                      className="text-emerald-700 hover:text-emerald-900 text-[10px]"
-                    >Dismiss</button>
-                  </div>
-                  <p className="text-[12px] text-emerald-900/70 leading-relaxed"><strong>{c.title}</strong> * {c.coveredCount}/{c.targetCount} covered. Thank you.</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-2.5">
-            <button onClick={() => goTab('give')} className="p-4 bg-white border border-[#111111]/15 rounded-2xl text-left hover:border-[#1F6B4A] transition-colors">
-              <Wallet className="w-5 h-5 text-[#1F6B4A] mb-2" />
-              <div className="text-[13px] font-bold text-[#111111]">Give Cash</div>
-              <div className="text-[12px] text-[#111111]/50 mt-0.5">Blind pool</div>
-            </button>
-            <button onClick={() => goTab('pledge')} className="p-4 bg-white border border-[#111111]/15 rounded-2xl text-left hover:border-[#1F6B4A] transition-colors">
-              <Package className="w-5 h-5 text-amber-600 mb-2" />
-              <div className="text-[13px] font-bold text-[#111111]">Pledge</div>
-              <div className="text-[12px] text-[#111111]/50 mt-0.5">Goods or credit</div>
-            </button>
-          </div>
-
-          {campaigns.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <TrendingUp className="w-4 h-4 text-[#1F6B4A]" />
-                  <h3 className="text-[11px] font-mono uppercase tracking-wider text-[#111111]/50">Active campaigns</h3>
-                </div>
-                <span className="text-[11px] font-mono text-[#111111]/50">{campaigns.length}</span>
-              </div>
-              {campaigns.map(c => {
-                const pct = Math.round((c.pooledAmount / c.targetAmount) * 100);
-                return (
-                  <div key={c.id} className="p-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-2">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[11px] font-mono uppercase text-[#1F6B4A] tracking-wider">Cohort</div>
-                        <h3 className="font-serif text-base font-bold text-[#111111] leading-snug">{c.title}</h3>
-                      </div>
-                      <div className="flex items-center gap-0.5 text-[11px] font-mono text-[#111111]/50 shrink-0">
-                        <Clock className="w-3 h-3" /> {c.daysRemaining}d
-                      </div>
-                    </div>
-                    <p className="text-[12px] text-[#111111]/60 leading-relaxed">{c.cohortGoalText}</p>
-                    <div className="space-y-1">
-                      <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#1F6B4A]" style={{ width: Math.min(100, pct) + '%' }} />
-                      </div>
-                      <div className="flex justify-between text-[11px] font-mono">
-                        <span className="font-bold text-[#1F6B4A]">{pct}%</span>
-                        <span className="text-[#111111]/50">{c.coveredCount}/{c.targetCount}</span>
-                      </div>
-                    </div>
-                    <button onClick={() => goTab('give')} className="w-full py-2 bg-[#111111] hover:bg-black text-white rounded-lg text-[10px] font-semibold">Contribute</button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {publicPartners.length > 0 && (
-            <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-2xl space-y-2">
-              <div className="flex justify-between items-center">
-                <h3 className="text-[11px] font-mono uppercase font-bold text-[#111111]/60 tracking-wider">Who we work with</h3>
-                <span className="text-[10px] font-mono bg-[#DCE8E0] text-[#1F6B4A] px-1.5 py-0.5 rounded">Verified</span>
-              </div>
-              <div className="space-y-1.5">
-                {publicPartners.map(p => (
-                  <div key={p.id} className="flex items-center justify-between py-1.5 border-b border-[#111111]/5 last:border-0">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-6 h-6 rounded-lg bg-[#FAF8F4] flex items-center justify-center text-[8px] font-bold text-[#1F6B4A] border border-[#111111]/10">
-                        {p.id.slice(0, 2)}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[13px] font-semibold text-[#111111] truncate">{p.name}</div>
-                        <div className="text-[11px] font-mono text-[#111111]/50 truncate">{p.region}</div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono uppercase text-[#111111]/40 shrink-0">{p.type}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[11px] text-[#111111]/50 leading-relaxed pt-1 border-t border-[#111111]/10">
-                We never share your contribution with these partners. They receive pooled settlement, never your identity or a specific recipient's.
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-[11px] font-mono uppercase tracking-wider text-[#111111]/50">Your activity</h3>
-              {hasActivity && <span className="text-[11px] font-mono text-[#111111]/50">{activityFeed.length}</span>}
-            </div>
-            {hasActivity ? (
-              activityFeed.slice(0, 10).map(item => (
-                <div key={item.id} className="p-3 bg-white border border-[#111111]/10 rounded-xl flex items-start gap-2 cursor-pointer hover:border-[#1F6B4A]" onClick={() => setSelectedActivity(item)}>
-                  <div className={'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ' + (item.kind === 'donation' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')}>
-                    {item.kind === 'donation' ? <Wallet className="w-4 h-4" /> : <Package className="w-4 h-4" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-semibold text-[#111111] truncate">{item.title}</div>
-                    <div className="text-[11px] font-mono text-[#111111]/50 mt-0.5">{item.subtitle}</div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    {item.amountKes !== undefined && (
-                      <div className="text-[13px] font-mono font-bold text-[#1F6B4A]">KES {item.amountKes.toLocaleString()}</div>
-                    )}
-                    <div className="text-[10px] font-mono text-[#111111]/40 mt-0.5">{formatRelativeTime(item.timestamp)}</div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <EmptyState
-                Icon={HeartHandshake}
-                title="No activity yet"
-                body="Your gifts, pledges, and campaign closures will appear here."
-                cta={{ label: 'Give your first gift', onClick: () => goTab('give') }}
-              />
-            )}
-          </div>
-        </div>
+        <DonorHome
+          activityFeed={activityFeed}
+          totalGivenKes={totalGivenKes}
+          impactStats={impactStats}
+          donorContributions={donorContributions}
+          pledges={pledges}
+          myProfile={myProfile}
+          impactDelta={impactDelta}
+          activeClosures={activeClosures}
+          dismissedClosures={dismissedClosures}
+          setDismissedClosures={setDismissedClosures}
+          campaigns={campaigns}
+          publicPartners={publicPartners}
+          openLedgerModal={openLedgerModal}
+          handleDownloadDonations={handleDownloadDonations}
+          goTab={goTab}
+          setSelectedActivity={setSelectedActivity}
+          formatRelativeTime={formatRelativeTime}
+        />
       );
     }
     if (tab === 'give') {
@@ -887,52 +691,22 @@ export const DonorView: React.FC = () => {
     );
   }
   return (
-    <div className="flex justify-center p-4">
-      <div className="w-full max-w-[420px] bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black">
-        <div className="bg-[#FAF8F4] rounded-[2rem] overflow-hidden flex flex-col h-[700px]">
-          <div className="px-5 pt-3 pb-1 flex items-center justify-between text-[10px] font-medium text-[#111111]/60">
-            <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setChannel('web')} className={channelBtnClass('web')}>Web</button>
-              <button onClick={() => setChannel('sms')} className={channelBtnClass('sms')}>SMS</button>
-            </div>
-          </div>
-          <div className="px-5 py-3 border-b border-[#111111]/10 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-[#1F6B4A] rounded-xl flex items-center justify-center">
-                <HeartHandshake className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <div className="font-serif text-lg font-bold text-[#111111] leading-tight">Donor Portal</div>
-                <div className="text-[10px] font-mono text-[#111111]/40 mt-0.5">Blind-pooled giving</div>
-              </div>
-            </div>
-            <button onClick={() => setScreen('settings')} className="text-[#111111]/40 hover:text-[#111111] p-1 rounded" aria-label="Settings" title="Settings">
-              <Settings className="w-4 h-4" />
-            </button>
-          </div>
-          <div key={screen + tab} className="flex-1 overflow-y-auto animate-in fade-in duration-200">{renderContent()}</div>
-          <div className="border-t border-[#111111]/10 bg-white">
-            <div className="grid grid-cols-5">
-              {TABS.map(t => {
-                const Icon = t.Icon;
-                const active = tab === t.id && screen === 'tab';
-                return (
-                  <button key={t.id} onClick={() => goTab(t.id)} className={'py-2.5 flex flex-col items-center gap-1 transition-colors ' + (active ? 'text-[#1F6B4A]' : 'text-[#111111]/40')}>
-                    <div className={'px-3 py-1 rounded-full transition-colors ' + (active ? 'bg-[#DCE8E0]' : '')}><Icon className="w-5 h-5" /></div>
-                    <span className={`text-[9px] ${active ? 'font-semibold' : 'font-medium'}`}>{t.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+    <div className="w-full flex flex-col gap-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-ink">Donor Portal</h1>
+          <p className="text-sm text-muted mt-1">Blind-pooled giving</p>
         </div>
+        <button onClick={() => setScreen('settings')} className="p-2 rounded-full hover:bg-tint transition-colors bg-surface border border-tile shadow-sm">
+          <Settings className="w-5 h-5 text-ink" />
+        </button>
       </div>
 
-
-
-
-      
+      {/* Main Content */}
+      <main className="w-full">
+        {renderContent()}
+      </main>
       
       {payingDonation && (
         <MpesaModal mode="donation" targetId={payingDonation.id} amount={payingDonation.amount} onClose={() => setPayingDonation(null)} />
@@ -943,4 +717,3 @@ export const DonorView: React.FC = () => {
     </div>
   );
 };
-

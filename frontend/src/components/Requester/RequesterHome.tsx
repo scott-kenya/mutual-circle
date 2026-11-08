@@ -2,7 +2,6 @@
 import { HeartHandshake, CheckCircle, X, Package, CreditCard, Users, MessageCircle, Trash2 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { ListRow } from '../ui/ListRow';
 import { StatusChip } from '../ui/StatusChip';
 
 interface RequesterHomeProps {
@@ -121,7 +120,7 @@ export const RequesterHome: React.FC<RequesterHomeProps> = (props) => {
 
       {props.mergedHistory.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">Recent Activity</h3>
+          <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Recent Activity</h3>
           <Card className="p-0 overflow-hidden">
             {props.mergedHistory.slice(0, 5).map((r: any) => {
               const isWithdrawn = r.status === 'withdrawn';
@@ -130,38 +129,53 @@ export const RequesterHome: React.FC<RequesterHomeProps> = (props) => {
               const resolvedPin: string | null = (liveSwap?.pin && String(liveSwap.pin) !== '----' && String(liveSwap.pin).length >= 3)
                 ? String(liveSwap.pin)
                 : (r.pin && String(r.pin) !== '----' && String(r.pin).length >= 3 ? String(r.pin) : null);
-              const canCollect = r.type === 'swap' && !isWithdrawn && ['reserved', 'verified', 'submitted_to_partner', 'voucher_issued'].includes(r.status);
+              const canCollect = r.type === 'swap' && !isWithdrawn && !!resolvedPin && ['reserved', 'verified', 'submitted_to_partner', 'voucher_issued'].includes(r.status);
               const canSettle = r.type === 'pool' && r.status === 'fulfilled' && r.paymentStatus !== 'paid';
-
+              
               return (
-                <div key={r.id} className="p-4 border-b border-tile last:border-0">
-                  <ListRow
-                    icon={r.type === 'swap' ? <Package className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
-                    title={r.type === 'swap' ? r.bundleCategory : r.category?.replace(/_/g, ' ')}
-                    subtitle={r.type === 'swap' ? r.lockerLocation : 'Bill Payment'}
-                    status={mapStatus(r.status, r.type)}
-                  />
-                  <div className="flex gap-2 mt-3 justify-end">
-                    {canWithdraw && (
-                      <Button variant="ghost" className="text-rose-600 px-3 py-1 text-xs" onClick={() => props.handleWithdraw(r.id, r.type)}>
-                        <Trash2 className="w-3 h-3 mr-1" /> Withdraw
-                      </Button>
-                    )}
-                    {canCollect && (
-                      <Button variant="ghost" className="text-pine px-3 py-1 text-xs" onClick={async () => {
-                        if (!resolvedPin) { props.setCollectError('PIN unavailable'); setTimeout(() => props.setCollectError(null), 3000); return; }
-                        await props.collectRequest(r.id, resolvedPin);
-                      }}>
-                        <CheckCircle className="w-3 h-3 mr-1" /> Confirm Pickup
-                      </Button>
-                    )}
-                    {canSettle && (
-                      <Button variant="primary" className="px-3 py-1 text-xs" onClick={() => props.setPayingRequest({ id: r.id, amount: r.amount * 100 })}>
-                        Settle
-                      </Button>
-                    )}
+                <div key={r.id} className="p-4 border-b border-tile last:border-0 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-canvas flex items-center justify-center text-pine shrink-0">
+                        {r.type === 'swap' ? <Package className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-ink truncate">
+                          {r.type === 'swap' ? r.bundleCategory : r.category?.replace(/_/g, ' ')}
+                        </div>
+                        <div className="text-xs text-muted truncate mt-0.5">
+                          {r.type === 'swap' ? r.lockerLocation : 'Bill Payment'}
+                        </div>
+                      </div>
+                    </div>
+                    <StatusChip status={mapStatus(r.status, r.type)} />
                   </div>
-                  {props.collectError && <p className="text-xs text-rose-600 mt-2">{props.collectError}</p>}
+                  
+                  {(canWithdraw || canCollect || canSettle || (r.type === 'swap' && !resolvedPin && ['reserved', 'verified', 'submitted_to_partner', 'voucher_issued'].includes(r.status))) && (
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-tile/50">
+                      {canWithdraw && (
+                        <Button variant="ghost" className="text-rose-600 px-2 py-1 text-xs h-8" onClick={() => props.handleWithdraw(r.id, r.type)}>
+                          <Trash2 className="w-3 h-3 mr-1" /> Withdraw
+                        </Button>
+                      )}
+                      {canCollect && (
+                        <Button variant="ghost" className="text-pine px-2 py-1 text-xs h-8" onClick={async () => {
+                          if (!resolvedPin) return;
+                          await props.collectRequest(r.id, resolvedPin);
+                        }}>
+                          <CheckCircle className="w-3 h-3 mr-1" /> Confirm Pickup
+                        </Button>
+                      )}
+                      {canSettle && (
+                        <Button variant="primary" className="px-2 py-1 text-xs h-8" onClick={() => props.setPayingRequest({ id: r.id, amount: r.amount * 100 })}>
+                          Settle
+                        </Button>
+                      )}
+                      {r.type === 'swap' && !resolvedPin && ['reserved', 'verified', 'submitted_to_partner', 'voucher_issued'].includes(r.status) && (
+                        <p className="text-xs text-muted italic">PIN sent via SMS</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
