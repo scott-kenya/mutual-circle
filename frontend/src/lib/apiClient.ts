@@ -47,7 +47,8 @@ async function call<T>(path: string, init?: RequestInit): Promise<T | null> {
       headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
     });
     if (res.status === 401) {
-      if (onSessionExpired) onSessionExpired();
+      const isPartnerEndpoint = path.startsWith('/partners/');
+      if (!isPartnerEndpoint && onSessionExpired) onSessionExpired();
       console.warn(`[api] 401 on ${init?.method ?? 'GET'} ${path} - session expired`);
       return null;
     }
