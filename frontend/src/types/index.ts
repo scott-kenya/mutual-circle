@@ -28,7 +28,7 @@ export interface PoolRequest {
   hashedObjectId: string;
   amount: number;
   tier: VerificationTier;
-  status: 'pending_check' | 'verified' | 'submitted_to_partner' | 'voucher_issued' | 'fulfilled' | 'withdrawn';
+  status: 'pending_check' | 'verified' | 'submitted_to_partner' | 'voucher_issued' | 'fulfilled' | 'withdrawn' | 'pending_evidence';
   paymentStatus?: 'n/a' | 'pending_payment' | 'paid' | 'payment_failed';
   mpesaReceipt?: string;
   timestamp: string;

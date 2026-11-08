@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { CheckCircle, AlertCircle, AlertTriangle, FileText, Check, Zap, GraduationCap, Building2 } from 'lucide-react';
+﻿import React, { useState } from 'react';
+import { CheckCircle, AlertCircle, AlertTriangle, FileText, Check, Zap, GraduationCap, Building2, Camera } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { StatusChip } from '../ui/StatusChip';
@@ -12,7 +12,7 @@ const POOL_CATS = [
 ] as const;
 
 type PoolCat = typeof POOL_CATS[number]['id'];
-type PoolStep = 'category' | 'details' | 'success';
+type PoolStep = 'category' | 'details' | 'photo' | 'success';
 
 interface PoolFlowProps {
   poolStep: PoolStep;
@@ -34,6 +34,9 @@ interface PoolFlowProps {
   pooling: boolean;
   rateLimited: boolean;
   handleSubmitPool: () => void;
+  evidenceUploading: boolean;
+  evidenceError: string | null;
+  handleUploadEvidence: (file: File) => void;
   goTab: (tab: 'home') => void;
 }
 
@@ -46,6 +49,7 @@ const mapStatus = (s: string): any => {
 };
 
 export const PoolFlow: React.FC<PoolFlowProps> = (props) => {
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   if (props.poolStep === 'success' && props.poolResult) {
     const cat = POOL_CATS.find(c => c.id === props.poolResult.category);
     const isPending = props.poolResult.status === 'pending_check';
@@ -114,18 +118,23 @@ export const PoolFlow: React.FC<PoolFlowProps> = (props) => {
 
       <div className="mb-6">
         <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">
-          Step {props.poolStep === 'category' ? '1' : '2'} of 2 — {props.poolStep === 'category' ? 'What are you paying?' : 'Bill details'}
+          {props.poolStep === 'category' && 'Step 1 of 3 — What are you paying?'}
+          {props.poolStep === 'details' && 'Step 2 of 3 — Bill details'}
+          {props.poolStep === 'photo' && 'Step 3 of 3 — Upload bill photo'}
         </div>
         <div className="flex items-center gap-2">
-        {(['category', 'details'] as const).map((s, i) => {
-          const active = props.poolStep === s || (s === 'category' && props.poolStep !== 'category');
-          const done = s === 'category' && props.poolStep === 'details';
+        {(['category', 'details', 'photo'] as const).map((s, i) => {
+          const order: Record<string, number> = { category: 0, details: 1, photo: 2 };
+          const current = order[props.poolStep] ?? 0;
+          const mine = order[s];
+          const active = current >= mine;
+          const done = current > mine;
           return (
             <React.Fragment key={s}>
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${active ? 'bg-pine text-white' : 'bg-canvas text-muted border border-tile'}`}>
                 {done ? <Check className="w-4 h-4" /> : i + 1}
               </div>
-              {i < 1 && <div className={`flex-1 h-1 rounded-full ${done ? 'bg-pine' : 'bg-tile'}`} />}
+              {i < 2 && <div className={`flex-1 h-1 rounded-full ${done ? 'bg-pine' : 'bg-tile'}`} />}
             </React.Fragment>
           );
         })}
@@ -236,6 +245,82 @@ export const PoolFlow: React.FC<PoolFlowProps> = (props) => {
           </div>
         );
       })()}
+
+      {props.poolStep === 'photo' && (
+        <div className="space-y-4">
+          <p className="text-sm font-semibold text-ink">3. Upload bill photo</p>
+
+          <Card className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                <Camera className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-ink">Proof of bill</div>
+                <p className="text-sm text-muted mt-1 leading-relaxed">
+                  Upload a photo of the bill. Only staff see it — used to verify the account number and amount match.
+                </p>
+              </div>
+            </div>
+
+            {!evidenceFile ? (
+              <label className="block">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  capture="environment"
+                  onChange={(e) => {
+                    const f = e.target.files && e.target.files[0];
+                    if (f) setEvidenceFile(f);
+                  }}
+                  className="hidden"
+                />
+                <div className="w-full py-3 bg-canvas border border-dashed border-tile rounded-[12px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-pine hover:bg-tint transition-colors">
+                  <Camera className="w-6 h-6 text-pine" />
+                  <span className="text-sm font-semibold text-pine">Choose photo</span>
+                  <span className="text-xs text-muted">JPEG, PNG, or PDF — max 5MB</span>
+                </div>
+              </label>
+            ) : (
+              <div className="flex items-center gap-2 p-3 bg-canvas rounded-[12px] border border-tile">
+                <FileText className="w-4 h-4 text-pine shrink-0" />
+                <span className="text-sm text-ink truncate flex-1">{evidenceFile.name}</span>
+                <span className="text-xs text-muted shrink-0">
+                  {(evidenceFile.size / 1024).toFixed(0)} KB
+                </span>
+                <button
+                  onClick={() => setEvidenceFile(null)}
+                  className="text-xs text-muted hover:text-rose-600 shrink-0"
+                >
+                  Change
+                </button>
+              </div>
+            )}
+
+            {props.evidenceError && (
+              <div className="text-xs text-rose-600 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {props.evidenceError}
+              </div>
+            )}
+          </Card>
+
+          <div className="flex gap-3 pt-2">
+            <Button variant="secondary" fullWidth onClick={() => props.setPoolStep('details')}>
+              Back
+            </Button>
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={() => evidenceFile && props.handleUploadEvidence(evidenceFile)}
+              disabled={!evidenceFile || props.evidenceUploading}
+            >
+              {props.evidenceUploading ? 'Uploading...' : 'Submit photo'}
+            </Button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

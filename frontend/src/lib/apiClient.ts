@@ -443,3 +443,32 @@ export const payPoolRequestStrict = async (token: string, requestId: string, pho
   if (!res.ok) throw new Error(data.reason || 'Payment failed');
   return data;
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tier 2 photo evidence (R.U.T.H 4.3 fallback path)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const uploadPoolEvidence = async (
+  token: string,
+  requestId: string,
+  file: File,
+): Promise<{ ok: boolean; request_id: string; status: string; filename: string } | null> => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${BASE}/requests/pool/${requestId}/evidence`, {
+      method: "POST",
+      headers: { "X-Token": token },  // browser sets multipart boundary
+      body: formData,
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[api] upload-evidence HTTP ${res.status}: ${body.slice(0, 200)}`);
+      return null;
+    }
+    return await res.json();
+  } catch (e) {
+    console.error("[upload-evidence]", e);
+    return null;
+  }
+};

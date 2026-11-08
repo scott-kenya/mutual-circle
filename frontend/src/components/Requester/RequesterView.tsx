@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { peekRate, consumeRate, loadHistory, saveHistory, loadSeen, saveSeen } from '../../services/auth';
-import { setHouseholdSize as apiSetHousehold, getHouseholdSize as apiGetHousehold, getOpportunities, getHelplines, getUnreadNotificationCount } from '../../lib/apiClient';
+import { getHelplines, getHouseholdSize as apiGetHousehold, getOpportunities, getUnreadNotificationCount, setHouseholdSize as apiSetHousehold, uploadPoolEvidence } from '../../lib/apiClient';
 import {
   HeartHandshake, Shield, Package, CreditCard, Users, MessageCircle,
   Home, MapPin, Check, CheckCircle, Clock, Copy, ScanLine, ArrowRight,
@@ -27,7 +27,7 @@ import { MpesaModal } from './MpesaModal';
 
 type Tab = 'home' | 'swap' | 'pool' | 'match' | 'bench' | 'messages' | 'settings';
 type SwapStep = 'bundle' | 'location' | 'success';
-type PoolStep = 'category' | 'details' | 'success';
+type PoolStep = 'category' | 'details' | 'photo' | 'success';
 type PoolCat = 'utility' | 'school_fee' | 'hospital_invoice';
 type IntakeStep = 'phone' | 'otp';
 
@@ -97,6 +97,8 @@ export const RequesterView: React.FC = () => {
   const [poolResult, setPoolResult] = useState<PoolRequest | null>(null);
   const [pooling, setPooling] = useState(false);
   const [poolError, setPoolError] = useState<string | null>(null);
+  const [evidenceUploading, setEvidenceUploading] = useState(false);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
 
   const [selectedOpp, setSelectedOpp] = useState<any | null>(null);
   const [matchConfirmed, setMatchConfirmed] = useState(false);
@@ -322,12 +324,35 @@ export const RequesterView: React.FC = () => {
       if (!rateCheck.ok) { const msg = (rateCheck as any).reason || 'Daily limit reached.'; setPoolError(msg); push({ kind: 'error', message: msg }); setPooling(false); return; }
       const res = await executePool(poolCat, poolObject, numAmount);
       if (!res) { setPoolError('Could not submit. Check the number format and try again.'); push({ kind: 'error', message: 'Submit failed - check number format' }); setPooling(false); return; }
-      setPoolResult(res); setPoolStep('success'); push({ kind: 'success', message: res.status === 'pending_check' ? 'Submitted for review' : 'Request queued' });
+      setPoolResult(res);
+      if (res.status === 'pending_evidence') {
+        setPoolStep('photo');
+      } else {
+        setPoolStep('success');
+      }
       const next = peekRate(tokenHash!);
       setRate({ count: next.count, value: next.value });
       if (tokenHash) setHistory(loadHistory(tokenHash));
     } catch { setPoolError('Unexpected error. Try again.'); push({ kind: 'error', message: 'Submit failed — try again' }); }
     setPooling(false);
+  };
+
+  const handleUploadEvidence = async (file: File) => {
+    if (!poolResult?.id || !tokenHash) return;
+    setEvidenceUploading(true);
+    setEvidenceError(null);
+    try {
+      const result = await uploadPoolEvidence(tokenHash, poolResult.id, file);
+      if (result?.ok) {
+        setPoolStep('success');
+        push({ kind: 'success', message: 'Photo submitted. Under review.' });
+      } else {
+        setEvidenceError('Upload failed. Try a different file or check your connection.');
+      }
+    } catch {
+      setEvidenceError('Upload error. Try again.');
+    }
+    setEvidenceUploading(false);
   };
 
   const handleWithdraw = (id: string, type: 'swap' | 'pool') => {
@@ -445,6 +470,9 @@ export const RequesterView: React.FC = () => {
       pooling={pooling}
       rateLimited={rateLimited}
       handleSubmitPool={handleSubmitPool}
+      evidenceUploading={evidenceUploading}
+      evidenceError={evidenceError}
+      handleUploadEvidence={handleUploadEvidence}
       goTab={goTab}
     />
   );
