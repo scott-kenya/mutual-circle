@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { type LucideIcon } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { type LucideIcon, Menu, X } from 'lucide-react';
 
 export interface NavItem {
   id: string;
@@ -14,69 +14,100 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
-export const AppShell: React.FC<AppShellProps> = ({ currentView, onViewChange, navItems, children }) => {
-  return (
-    <div className="flex h-[100dvh] bg-canvas overflow-hidden">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-surface border-r border-tile shrink-0">
-        <div className="h-16 flex items-center px-6 border-b border-tile">
-          <span className="text-xl font-bold text-ink tracking-tight">Mutual Circle</span>
-        </div>
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.Icon;
-            const active = currentView === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onViewChange(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                  active ? 'bg-pine text-white shadow-soft' : 'text-muted hover:bg-tint hover:text-ink'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
+const PAGE_TITLES: Record<string, string> = {
+  requester: 'Mutual Circle',
+  donor: 'Donor Portal',
+  console: 'Operations',
+  sms: 'SMS Simulator',
+  ussd: 'USSD Simulator',
+  whatsapp: 'WhatsApp Simulator',
+  architecture: 'Architecture',
+  bench: 'The Bench',
+};
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile Header (hidden on desktop) */}
-        <header className="md:hidden h-14 bg-surface border-b border-tile flex items-center justify-between px-4 shrink-0">
-          <span className="text-lg font-bold text-ink">Mutual Circle</span>
+export const AppShell: React.FC<AppShellProps> = ({ currentView, onViewChange, navItems, children }) => {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [currentView]);
+
+  const handleNav = (id: string) => {
+    onViewChange(id);
+    setDrawerOpen(false);
+  };
+
+  const pageTitle = PAGE_TITLES[currentView] || 'Mutual Circle';
+
+  return (
+    <div className="min-h-[100dvh] bg-canvas flex justify-center">
+      <div className="w-full max-w-[420px] flex flex-col h-[100dvh] bg-canvas border-x border-tile relative overflow-hidden">
+
+        {/* Header with hamburger */}
+        <header className="h-14 bg-surface/90 backdrop-blur-md border-b border-tile flex items-center justify-between px-4 shrink-0 z-20">
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="p-2 -ml-2 rounded-lg hover:bg-tint transition-colors"
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5 text-ink" />
+          </button>
+          <span className="text-base font-semibold text-ink truncate">{pageTitle}</span>
+          <div className="w-9" />
         </header>
 
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto bg-canvas p-4 md:p-8 pb-24 md:pb-8">
-          <div className="max-w-5xl mx-auto">
-            {children}
-          </div>
-        </main>
+        {/* Content — each page manages its own scroll + bottom nav */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {children}
+        </div>
 
-        {/* Mobile Bottom Nav (hidden on desktop) */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-md border-t border-tile z-50">
-          <div className="flex justify-around items-center h-16 pb-[env(safe-area-inset-bottom)]">
-            {navItems.slice(0, 5).map((item) => {
+        {/* Drawer backdrop */}
+        <div
+          className={`absolute inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+            drawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          onClick={() => setDrawerOpen(false)}
+          aria-hidden="true"
+        />
+
+        {/* Drawer — full list with long labels, opens from ☰ */}
+        <aside
+          className={`absolute inset-y-0 left-0 w-72 max-w-[80%] bg-surface border-r border-tile z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${
+            drawerOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="h-14 flex items-center justify-between px-4 border-b border-tile shrink-0">
+            <span className="text-lg font-bold text-ink">Menu</span>
+            <button
+              onClick={() => setDrawerOpen(false)}
+              className="p-2 -mr-2 rounded-lg hover:bg-tint transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5 text-ink" />
+            </button>
+          </div>
+          <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            {navItems.map((item) => {
               const Icon = item.Icon;
               const active = currentView === item.id;
               return (
                 <button
                   key={item.id}
-                  onClick={() => onViewChange(item.id)}
-                  className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-                    active ? 'text-pine' : 'text-muted'
+                  onClick={() => handleNav(item.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    active ? 'bg-pine text-white shadow-soft' : 'text-muted hover:bg-tint hover:text-ink'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">{item.label}</span>
+                  {item.label}
                 </button>
               );
             })}
+          </nav>
+          <div className="border-t border-tile px-4 py-3 text-xs text-muted">
+            <span className="font-mono">v1.0 · dev build</span>
           </div>
-        </nav>
+        </aside>
       </div>
     </div>
   );

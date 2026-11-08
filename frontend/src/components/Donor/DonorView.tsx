@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { SkeletonList } from '../Shared/Skeleton';
 import { EmptyState } from '../Shared/EmptyState';
+import { AppBottomNav } from '../layout/AppBottomNav';
 import { MpesaModal } from '../Requester/MpesaModal';
 
 type Tab = 'home' | 'give' | 'pledge' | 'impact' | 'leaders';
@@ -443,17 +444,8 @@ export const DonorView: React.FC = () => {
           activityFeed={activityFeed}
           totalGivenKes={totalGivenKes}
           impactStats={impactStats}
-          donorContributions={donorContributions}
-          pledges={pledges}
-          myProfile={myProfile}
-          impactDelta={impactDelta}
-          activeClosures={activeClosures}
-          dismissedClosures={dismissedClosures}
-          setDismissedClosures={setDismissedClosures}
           campaigns={campaigns}
-          publicPartners={publicPartners}
           openLedgerModal={openLedgerModal}
-          handleDownloadDonations={handleDownloadDonations}
           goTab={goTab}
           setSelectedActivity={setSelectedActivity}
           formatRelativeTime={formatRelativeTime}
@@ -696,7 +688,9 @@ export const DonorView: React.FC = () => {
     );
   }
   return (
-    <div className="w-full flex flex-col gap-6">
+    <>
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="w-full flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -712,13 +706,15 @@ export const DonorView: React.FC = () => {
       <main className="w-full">
         {renderContent()}
       </main>
-      
+        </div>
+      </div>
+      <AppBottomNav tabs={TABS} active={tab} onChange={goTab} />
       {payingDonation && (
         <MpesaModal mode="donation" targetId={payingDonation.id} amount={payingDonation.amount} onClose={() => setPayingDonation(null)} />
       )}
       {payingPledge && (
         <MpesaModal mode="pledge" targetId={payingPledge.id} amount={payingPledge.amount} onClose={() => setPayingPledge(null)} />
       )}
-    </div>
+    </>
   );
 };

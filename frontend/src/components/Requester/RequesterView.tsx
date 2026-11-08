@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { StatusTimeline } from './StatusTimeline';
 import { EmptyState } from '../Shared/EmptyState';
+import { AppBottomNav } from '../layout/AppBottomNav';
 import { useToast } from '../Shared/Toast';
 import { SwapRequest, PoolRequest } from '../../types';
 import { RequesterMessages } from './Messages';
@@ -557,7 +558,9 @@ export const RequesterView: React.FC = () => {
 
 
   return (
-    <div className="w-full flex flex-col gap-6">
+    <>
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="w-full flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -584,10 +587,12 @@ export const RequesterView: React.FC = () => {
       <main className="w-full">
         {renderContent()}
       </main>
-      
+        </div>
+      </div>
+      <AppBottomNav tabs={TABS} active={tab} onChange={goTab} />
       {payingRequest && (
         <MpesaModal mode="request" targetId={payingRequest.id} amount={payingRequest.amount} onClose={() => setPayingRequest(null)} />
       )}
-    </div>
+    </>
   );
 };
