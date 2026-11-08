@@ -1,6 +1,8 @@
 """Requester routes — token-authenticated via X-Token header."""
 from fastapi import APIRouter, Depends, HTTPException, Header
-from pydantic import BaseModel, Field
+import re
+
+from pydantic import BaseModel, Field, model_validator
 
 import logging
 
@@ -36,6 +38,26 @@ class PoolBody(BaseModel):
     category: str = Field(..., pattern="^(utility|school_fee|hospital_invoice)$")
     hashed_object_id: str = Field(..., min_length=4, max_length=64)
     amount_pence: int = Field(..., gt=0, le=100_000_000)
+
+    @model_validator(mode='after')
+    def _validate_object_format(self):
+        # R.U.T.H 4.3: object-level verification. Format check per
+        # category so a client can't submit 'hello' as a meter number.
+        # Real existence + unpaid + amount match is a downstream check
+        # (spec 8 item 2 — external lookup unconfirmed; fallback is
+        # photo + automated plausibility).
+        patterns = {
+            'utility':          r'^\d{8,12}$',
+            'school_fee':       r'^[A-Z0-9]{6,10}$',
+            'hospital_invoice': r'^[A-Z0-9-]{4,12}$',
+        }
+        pattern = patterns[self.category]
+        if not re.fullmatch(pattern, self.hashed_object_id):
+            raise ValueError(
+                f"Invalid object ID format for {self.category}. "
+                f"Expected pattern: {pattern}"
+            )
+        return self
 
 
 class PayBody(BaseModel):
