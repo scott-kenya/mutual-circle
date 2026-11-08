@@ -321,7 +321,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const c = await api.listCampaigns();
     if (c) setCampaigns(mapCampaigns(c));
 
-    const r = sessionToken ? await api.listFulfilmentRedemptions(sessionToken) : null;
+    const r = (sessionToken && staffRole === 'fulfilment') ? await api.listFulfilmentRedemptions(sessionToken) : null;
     if (r) setVoucherRedemptions(mapRedemptions(r));
 
     if (tokenHash) {
@@ -364,7 +364,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (staffRole === 'fulfilment') {
         const [q, pledges, interests, staffVouchers] = await Promise.all([
           api.fulfilmentQueue(sessionToken),
-          api.listFulfilmentPledges(sessionToken),
+          staffRole === 'fulfilment' ? api.listFulfilmentPledges(sessionToken) : Promise.resolve(null),
           api.listMatchInterests(sessionToken),
           api.listAllVouchers(sessionToken),
         ]);
