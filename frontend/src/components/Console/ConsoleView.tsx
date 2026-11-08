@@ -759,9 +759,9 @@ export const ConsoleView: React.FC = () => {
   const pendingMoreCount = riskFlags.filter(f => f.status === 'pending').length + ocrQueue.length;
 
   return (
-    <div className="flex justify-center p-4">
-      <div className="w-full max-w-[420px] bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black">
-        <div className="bg-[#FAF8F4] rounded-[2rem] overflow-hidden flex flex-col h-[700px]">
+    <div className="w-full">
+      <div className="w-full">
+        <div className="bg-surface border border-tile shadow-soft rounded-[22px] overflow-hidden flex flex-col min-h-[calc(100dvh-10rem)]">
           <div className="px-5 pt-3 pb-1 flex items-center justify-between text-[11px] font-medium text-[#111111]/60">
             <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             <span className="text-[10px] font-mono bg-[#DCE8E0] text-[#1F6B4A] px-1.5 py-0.5 rounded uppercase font-bold">{roleLabel[staffRole as Role]}</span>
