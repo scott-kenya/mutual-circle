@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { AppBottomNav } from '../layout/AppBottomNav';
 import { SkeletonList } from '../Shared/Skeleton';
 import { useToast } from '../Shared/Toast';
 import { EmptyState } from '../Shared/EmptyState';
@@ -794,6 +795,20 @@ export const ConsoleView: React.FC = () => {
     + swapRequests.filter(r => r.status === 'reserved').length;
   const pendingMoreCount = riskFlags.filter(f => f.status === 'pending').length + ocrQueue.length;
 
+
+  const consoleTabs: { id: Tab; label: string; Icon: any; badge?: number }[] = [
+    { id: 'queue', label: staffRole === 'enrolment' ? 'Metrics' : staffRole === 'audit' ? 'Audit' : 'Queue', Icon: Activity, badge: pendingQueueCount },
+    { id: 'depot', label: 'Depot', Icon: Boxes },
+    { id: 'till', label: 'Till', Icon: Store },
+    { id: 'partners', label: 'Partners', Icon: Building2 },
+    { id: 'more', label: 'More', Icon: Layers, badge: pendingMoreCount },
+  ];
+
+  const handleConsoleTabChange = (id: Tab) => {
+    setTab(id);
+    if (id === 'more') setMoreTab('menu');
+  };
+
   return (
     <div className="w-full">
       <div className="w-full">
@@ -808,31 +823,7 @@ export const ConsoleView: React.FC = () => {
             </button>
           </div>
           <div key={staffRole + tab + auditSub + moreTab} className="flex-1 overflow-y-auto animate-in fade-in duration-200">{renderContent()}</div>
-          <div className="border-t border-[#111111]/10 bg-white">
-            <div className="grid grid-cols-5">
-              {([
-                { id: 'queue' as Tab, Icon: Activity, l: 'Queue' },
-                { id: 'depot' as Tab, Icon: Boxes, l: 'Depot' },
-                { id: 'till' as Tab, Icon: Store, l: 'Till' },
-                { id: 'partners' as Tab, Icon: Building2, l: 'Partners' },
-                { id: 'more' as Tab, Icon: Layers, l: 'More' },
-              ]).map(t => {
-                const I = t.Icon;
-                const active = tab === t.id;
-                return (
-                  <button key={t.id} onClick={() => { setTab(t.id); if (t.id === 'more') setMoreTab('menu'); }} className={'relative py-2.5 flex flex-col items-center gap-1 ' + (active ? 'text-[#1F6B4A]' : 'text-[#111111]/40')}>
-                    <div className={'px-3 py-1 rounded-full transition-colors ' + (active ? 'bg-[#DCE8E0]' : '')}><I className="w-4 h-4" /></div>
-                    <span className={`text-[10px] ${active ? 'font-semibold' : 'font-medium'}`}>{t.id === 'queue' ? (staffRole === 'enrolment' ? 'Metrics' : staffRole === 'audit' ? 'Audit' : 'Queue') : t.l}</span>
-                    {((t.id === 'queue' && pendingQueueCount > 0) || (t.id === 'more' && pendingMoreCount > 0)) && (
-                      <span className="absolute top-0.5 right-3 min-w-[14px] h-[14px] bg-rose-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                        {(t.id === 'queue' ? pendingQueueCount : pendingMoreCount) > 9 ? '9+' : (t.id === 'queue' ? pendingQueueCount : pendingMoreCount)}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <AppBottomNav tabs={consoleTabs} active={tab} onChange={handleConsoleTabChange} />
         </div>
       </div>
 
