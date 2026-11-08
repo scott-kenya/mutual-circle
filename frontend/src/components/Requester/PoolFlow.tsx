@@ -52,7 +52,7 @@ export const PoolFlow: React.FC<PoolFlowProps> = (props) => {
     return (
       <div className="space-y-4 pb-20">
         <div className="text-center pt-6 space-y-3">
-          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto border-2 ${isPending ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-lime text-pine border-tile'}`}>
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto border-2 animate-in zoom-in-50 duration-500 ${isPending ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-lime text-pine border-tile'}`}>
             <CheckCircle className="w-8 h-8" />
           </div>
           <div>
@@ -69,9 +69,9 @@ export const PoolFlow: React.FC<PoolFlowProps> = (props) => {
             <div className="flex justify-between"><span className="text-muted">Reference</span><span className="font-mono font-bold text-pine">{props.poolResult.hashedObjectId}</span></div>
             <div className="flex justify-between items-baseline">
               <span className="text-muted">Amount</span>
-              <span className="font-mono font-bold text-ink">
+              <span className="font-mono font-bold text-ink animate-in fade-in duration-700">
                 <span className="text-xs text-muted mr-1">KES</span>
-                <span className="text-lg tabular-nums">{props.poolResult.amount.toLocaleString()}</span>
+                <span className="text-2xl tabular-nums">{props.poolResult.amount.toLocaleString()}</span>
               </span>
             </div>
             <div className="flex justify-between items-center"><span className="text-muted">Status</span><StatusChip status={mapStatus(props.poolResult.status)} /></div>
@@ -112,7 +112,11 @@ export const PoolFlow: React.FC<PoolFlowProps> = (props) => {
         </Card>
       )}
 
-      <div className="flex items-center gap-2 mb-6">
+      <div className="mb-6">
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">
+          Step {props.poolStep === 'category' ? '1' : '2'} of 2 — {props.poolStep === 'category' ? 'What are you paying?' : 'Bill details'}
+        </div>
+        <div className="flex items-center gap-2">
         {(['category', 'details'] as const).map((s, i) => {
           const active = props.poolStep === s || (s === 'category' && props.poolStep !== 'category');
           const done = s === 'category' && props.poolStep === 'details';
@@ -125,6 +129,7 @@ export const PoolFlow: React.FC<PoolFlowProps> = (props) => {
             </React.Fragment>
           );
         })}
+        </div>
       </div>
 
       {props.poolStep === 'category' && (
@@ -137,7 +142,7 @@ export const PoolFlow: React.FC<PoolFlowProps> = (props) => {
               <button
                 key={c.id}
                 onClick={() => props.setPoolCat(c.id)}
-                className={`w-full p-4 rounded-[16px] border-2 text-left flex items-start gap-3 transition-all ${selected ? 'border-pine bg-surface' : 'border-tile bg-canvas'}`}
+                className={`w-full p-4 rounded-[16px] border-2 text-left flex items-start gap-3 transition-all ${selected ? 'border-pine bg-surface shadow-soft' : 'border-tile bg-canvas hover:border-pine/50 hover:shadow-soft'}`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${c.accent}`}>
                   <I className="w-5 h-5" />
