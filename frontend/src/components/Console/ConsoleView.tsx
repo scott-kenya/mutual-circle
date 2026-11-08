@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { STAFF_CREDS } from '../../services/auth';
 import { DetailModal } from './DetailModal';
@@ -77,17 +77,41 @@ export const ConsoleView: React.FC = () => {
   }, []);
   useEffect(() => {
     if (tab !== 'partners') return;
+
+    // Demo partner keys have no real session — skip the fetch entirely
+    // so we do not spam the console with 401s and can render an
+    // honest "not available in demo" empty state.
+    if (selectedPartner.includes('demo-key')) {
+      setPartnerInfo(null);
+      setPartnerRedemptions([]);
+      setPartnerLoading(false);
+      return;
+    }
     let cancelled = false;
     setPartnerLoading(true);
     (async () => {
-      const [me, red] = await Promise.all([
-        getPartnerMe(selectedPartner),
-        getPartnerRedemptions(selectedPartner),
-      ]);
-      if (!cancelled) {
-        if (me) setPartnerInfo(me);
-        if (red) setPartnerRedemptions(red.redemptions || []);
-        setPartnerLoading(false);
+      try {
+        const me = await getPartnerMe(selectedPartner);
+        if (!cancelled && me && typeof me === 'object' && 'name' in me) {
+          setPartnerInfo(me);
+        } else if (!cancelled) {
+          setPartnerInfo(null);
+        }
+
+        const red = await getPartnerRedemptions(selectedPartner);
+        if (!cancelled && red && typeof red === 'object' && 'redemptions' in red) {
+          setPartnerRedemptions(red.redemptions || []);
+        } else if (!cancelled) {
+          setPartnerRedemptions([]);
+        }
+      } catch (err) {
+        console.warn('[partners] fetch failed:', err);
+        if (!cancelled) {
+          setPartnerInfo(null);
+          setPartnerRedemptions([]);
+        }
+      } finally {
+        if (!cancelled) setPartnerLoading(false);
       }
     })();
     return () => { cancelled = true; };
@@ -635,7 +659,7 @@ export const ConsoleView: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <div className="text-[11px] font-semibold text-[#111111] capitalize truncate">{details}</div>
                       <div className="text-[11px] font-mono text-[#111111]/50 truncate">
-                        {String(r.id).slice(0, 8)}â€¦ Â· {(r.status || '').replace(/_/g, ' ')}
+                        {String(r.id).slice(0, 8)}Ã¢â‚¬Â¦ Ã‚Â· {(r.status || '').replace(/_/g, ' ')}
                       </div>
                     </div>
                     {r.amount_pence !== undefined && r.amount_pence > 0 && (
@@ -662,7 +686,17 @@ export const ConsoleView: React.FC = () => {
             })}
           </div>
         </>
-      ) : null}
+      ) : (
+        <div className="p-5 text-center space-y-2">
+          <div className="w-12 h-12 bg-canvas rounded-full flex items-center justify-center mx-auto">
+            <Building2 className="w-6 h-6 text-muted" />
+          </div>
+          <p className="text-sm font-semibold text-ink">Partner session not available</p>
+          <p className="text-xs text-muted leading-relaxed max-w-xs mx-auto">
+            Demo build - in production this page shows pending fulfillments for the selected partner and confirms delivery.
+          </p>
+        </div>
+      )}
     </div>
   );
 
