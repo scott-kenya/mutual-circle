@@ -162,6 +162,7 @@ async def initiate_stk_push(
         "response_code": data["ResponseCode"],
         "response_description": data.get("ResponseDescription"),
         "customer_message": data.get("CustomerMessage"),
+        "phone": normalized,
     }
 
 

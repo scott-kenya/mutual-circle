@@ -211,9 +211,9 @@ async def pay_donation(
         checkout_id = stk["checkout_request_id"]
 
         await conn.execute(
-            """INSERT INTO mpesa_transactions (checkout_request_id, amount_pence, target_table, target_id)
-               VALUES ($1, $2, 'donor_contributions', $3)""",
-            checkout_id, row["amount_pence"], row["id"]
+            """INSERT INTO mpesa_transactions (checkout_request_id, amount_pence, target_table, target_id, expected_phone)
+               VALUES ($1, $2, 'donor_contributions', $3, $4)""",
+            checkout_id, row["amount_pence"], row["id"], stk["phone"]
         )
         await conn.execute(
             "UPDATE donor_contributions SET status = 'pending_payment' WHERE id = $1",

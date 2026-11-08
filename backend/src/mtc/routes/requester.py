@@ -221,9 +221,9 @@ async def pay_route(
         )
 
         await conn.execute(
-            """INSERT INTO mpesa_transactions (checkout_request_id, amount_pence, target_table, target_id)
-               VALUES ($1, $2, 'requests', $3)""",
-            checkout_id, row["amount_pence"], row["id"]
+            """INSERT INTO mpesa_transactions (checkout_request_id, amount_pence, target_table, target_id, expected_phone)
+               VALUES ($1, $2, 'requests', $3, $4)""",
+            checkout_id, row["amount_pence"], row["id"], stk["phone"]
         )
         await conn.execute(
             "UPDATE requests SET payment_status = 'pending_payment', updated_at = now() WHERE id = $1",
