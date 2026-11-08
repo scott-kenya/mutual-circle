@@ -512,6 +512,7 @@ export const RequesterView: React.FC = () => {
         otpError={otpError}
         otpProcessing={otpProcessing}
         resendCooldown={resendCooldown}
+        generatedOtp={generatedOtp}
         handleSendOtp={handleSendOtp}
         handleVerifyOtp={handleVerifyOtp}
         handleResend={handleResend}

@@ -37,7 +37,7 @@ export const SwapFlow: React.FC<SwapFlowProps> = (props) => {
     return (
       <div className="space-y-4 pb-20">
         <div className="text-center pt-6 space-y-2">
-          <div className="w-16 h-16 bg-lime text-pine rounded-full flex items-center justify-center mx-auto border border-tile">
+          <div className="w-16 h-16 bg-lime text-pine rounded-full flex items-center justify-center mx-auto border border-tile animate-in zoom-in-50 duration-500">
             <CheckCircle className="w-8 h-8" />
           </div>
           <div>
@@ -56,7 +56,7 @@ export const SwapFlow: React.FC<SwapFlowProps> = (props) => {
             <div>
               <div className="text-xs font-semibold uppercase text-muted">Collection PIN</div>
               <div className="flex items-center gap-2 mt-1">
-                <span className="font-mono text-3xl font-bold tracking-widest text-pine">{props.swapResult.pin}</span>
+                <span className="font-mono text-4xl font-bold tracking-widest text-pine animate-in fade-in duration-700">{props.swapResult.pin}</span>
                 <button onClick={props.copyPin} className="p-2 rounded-full hover:bg-canvas text-muted transition-colors">
                   {props.pinCopied ? <Check className="w-4 h-4 text-pine" /> : <Copy className="w-4 h-4" />}
                 </button>
@@ -111,7 +111,11 @@ export const SwapFlow: React.FC<SwapFlowProps> = (props) => {
         </Card>
       )}
 
-      <div className="flex items-center gap-2 mb-6">
+      <div className="mb-6">
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">
+          Step {props.swapStep === 'bundle' ? '1' : '2'} of 2 — {props.swapStep === 'bundle' ? 'Choose bundle' : 'Choose location'}
+        </div>
+        <div className="flex items-center gap-2">
         {(['bundle', 'location'] as const).map((s, i) => {
           const active = props.swapStep === s || (s === 'bundle' && props.swapStep !== 'bundle');
           const done = s === 'bundle' && props.swapStep === 'location';
@@ -124,6 +128,7 @@ export const SwapFlow: React.FC<SwapFlowProps> = (props) => {
             </React.Fragment>
           );
         })}
+        </div>
       </div>
 
       {props.swapStep === 'bundle' && (
@@ -136,7 +141,7 @@ export const SwapFlow: React.FC<SwapFlowProps> = (props) => {
               <button
                 key={b.id}
                 onClick={() => props.setSwapBundle(b.id)}
-                className={`w-full p-4 rounded-[16px] border-2 text-left flex items-start gap-3 transition-all ${selected ? 'border-pine bg-surface' : 'border-tile bg-canvas'}`}
+                className={`w-full p-4 rounded-[16px] border-2 text-left flex items-start gap-3 transition-all ${selected ? 'border-pine bg-surface shadow-soft' : 'border-tile bg-canvas hover:border-pine/50 hover:shadow-soft'}`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${b.accent}`}>
                   <I className="w-5 h-5" />
@@ -164,7 +169,7 @@ export const SwapFlow: React.FC<SwapFlowProps> = (props) => {
               <button
                 key={l.id}
                 onClick={() => props.setSwapLocation(l.id)}
-                className={`w-full p-4 rounded-[16px] border-2 text-left flex items-center gap-3 transition-all ${selected ? 'border-pine bg-surface' : 'border-tile bg-canvas'}`}
+                className={`w-full p-4 rounded-[16px] border-2 text-left flex items-center gap-3 transition-all ${selected ? 'border-pine bg-surface shadow-soft' : 'border-tile bg-canvas hover:border-pine/50 hover:shadow-soft'}`}
               >
                 <MapPin className="w-5 h-5 text-pine shrink-0" />
                 <div className="flex-1 min-w-0">
