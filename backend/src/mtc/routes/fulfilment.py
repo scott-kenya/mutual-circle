@@ -74,11 +74,26 @@ async def match_pledge(
 ):
     request_id = body.request_id if body else None
 
-    pledge = await conn.fetchrow("SELECT id, status FROM pledges WHERE id = $1", pledge_id)
+    pledge = await conn.fetchrow("SELECT id, status, type FROM pledges WHERE id = $1", pledge_id)
     if not pledge:
         raise HTTPException(404, "Pledge not found")
     if pledge["status"] != "awaiting_match":
         raise HTTPException(409, f"Pledge in status '{pledge['status']}' cannot be matched")
+
+    # R.U.T.H 4.4: no direct donor-to-recipient handoff for goods.
+    # Goods pledges must be pooled and redistributed as bundles (4.2)
+    # and cannot be matched to a specific requester's request. Service
+    # credits are the exception: they settle through the same payment
+    # path as any Pool transaction (4.4).
+    if request_id and pledge["type"] != 'service_credit':
+        raise HTTPException(
+            422,
+            detail={
+                "reason": "goods_pledge_direct_match_forbidden",
+                "message": "Goods pledges cannot be matched to specific requests. "
+                           "They are pooled and redistributed as bundles per R.U.T.H 4.4.",
+            },
+        )
 
     if request_id:
         request_row = await conn.fetchrow(
