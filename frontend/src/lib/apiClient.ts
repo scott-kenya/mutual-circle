@@ -18,6 +18,28 @@ export function setSessionExpiredHandler(handler: SessionExpiredHandler | null):
 }
 
 let backendKnownDown = false;
+let backendDownAt = 0;
+const BACKEND_DOWN_TTL_MS = 30_000;  // retry after 30s
+
+function isBackendDown(): boolean {
+  if (!backendKnownDown) return false;
+  if (Date.now() - backendDownAt > BACKEND_DOWN_TTL_MS) {
+    backendKnownDown = false;
+    backendDownAt = 0;
+    notifyBackendState(false);
+    return false;
+  }
+  return true;
+}
+
+function markBackendDown(): void {
+  if (!backendKnownDown) {
+    backendKnownDown = true;
+    backendDownAt = Date.now();
+    notifyBackendState(true);
+  }
+}
+
 
 type BackendStateListener = (down: boolean) => void;
 const backendStateListeners: BackendStateListener[] = [];
@@ -37,8 +59,8 @@ function notifyBackendState(down: boolean): void {
 }
 
 async function call<T>(path: string, init?: RequestInit): Promise<T | null> {
-  if (backendKnownDown) {
-    console.warn(`[api] Skipping ${init?.method ?? 'GET'} ${path} - backend known down`);
+  if (isBackendDown()) {
+    console.warn(`[api] Skipping ${init?.method ?? 'GET'} ${path} - backend down, will retry in 30s`);
     return null;
   }
   try {
@@ -54,30 +76,27 @@ async function call<T>(path: string, init?: RequestInit): Promise<T | null> {
     }
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      if (res.status >= 500 && !backendKnownDown) {
-        backendKnownDown = true;
-        notifyBackendState(true);
+      if (res.status >= 500) {
+        markBackendDown();
       }
       console.error(`[api] ${res.status} ${init?.method ?? 'GET'} ${path}: ${body.slice(0, 300)}`);
       return null;
     }
     return (await res.json()) as T;
   } catch (e) {
-    if (!backendKnownDown) {
-      backendKnownDown = true;
-      notifyBackendState(true);
-    }
+    markBackendDown();
     console.error(`[api] Network error on ${init?.method ?? 'GET'} ${path}:`, e);
     return null;
   }
 }
 
 export function isBackendActive(): boolean {
-  return !backendKnownDown;
+  return !isBackendDown();
 }
 
 export function resetBackendProbe(): void {
   if (backendKnownDown) {
+    backendDownAt = 0;
     backendKnownDown = false;
     notifyBackendState(false);
   }
