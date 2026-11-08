@@ -3,6 +3,9 @@ import { useApp } from '../../context/AppContext';
 import { SmsDonorSimulator } from './SmsDonorSimulator';
 import { GiveFlow } from './GiveFlow';
 import { DonorHome } from './DonorHome';
+import { DonorImpact } from './DonorImpact';
+import { DonorLeaders } from './DonorLeaders';
+import { DonorSettings } from './DonorSettings';
 import { PledgeFlow } from './PledgeFlow';
 import { DonorActivityModal } from './DonorActivityModal';
 import { getDonorLeaderboard, getDonorProfile, updateDonorProfile, getImpactStats, getDistribution, getPublicPartners, getPublicLedger, downloadPublicLedgerCsv } from '../../lib/apiClient';
@@ -266,66 +269,19 @@ export const DonorView: React.FC = () => {
     }
     if (screen === 'settings') {
       return (
-        <div className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-serif text-lg font-bold text-[#111111]">Settings</h2>
-              <p className="text-[10px] font-mono text-[#111111]/50 mt-0.5">Account and transparency</p>
-            </div>
-            <button onClick={() => setScreen('tab')} className="text-[10px] font-mono text-[#111111]/60 hover:text-[#111111]">Back</button>
-          </div>
-
-          <button onClick={() => setScreen('ledger')} className="w-full p-3 bg-white border border-[#111111]/15 rounded-xl flex items-center justify-between hover:border-[#1F6B4A] transition-colors">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#DCE8E0] text-[#1F6B4A] flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-4 h-4" />
-              </div>
-              <div className="text-left">
-                <div className="text-sm font-semibold text-[#111111]">Verify public ledger</div>
-                <div className="text-[10px] font-mono text-[#111111]/50 mt-0.5">Chain status, recent entries, CSV download</div>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-[#111111]/30 shrink-0" />
-          </button>
-
-          <div className="p-4 rounded-xl bg-white border border-[#111111]/5 shadow-sm space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif text-sm font-bold text-[#111111] flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-[#1F6B4A]" /> Server View
-              </h3>
-              <button onClick={() => setShowServer(!showServer)} className="text-[10px] text-[#1F6B4A] hover:underline flex items-center gap-1">
-                {showServer ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                {showServer ? 'Hide' : 'Reveal'}
-              </button>
-            </div>
-            <div className="space-y-2 pt-2 border-t border-[#111111]/10 font-mono text-[10px]">
-              <div className="flex justify-between"><span className="text-[#111111]/50">Donor hash</span><span className="text-[#1F6B4A] font-bold">{showServer ? 'donor_8f4c2e' : '******'}</span></div>
-              <div className="flex justify-between"><span className="text-[#111111]/50">Name</span><span className="text-rose-600 font-bold">{showServer ? 'NOT STORED' : '******'}</span></div>
-              <div className="flex justify-between"><span className="text-[#111111]/50">Recipient link</span><span className="text-rose-600 font-bold">NONE</span></div>
-              <div className="flex justify-between border-t border-[#111111]/10 pt-2 mt-2"><span className="text-[#111111]/50">Session total</span><span className="text-[#111111] font-bold">KES {totalGiven.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-[#111111]/50">Contributions</span><span className="text-[#111111]">{donorContributions.length}</span></div>
-              <div className="flex justify-between"><span className="text-[#111111]/50">Pledges</span><span className="text-[#111111]">{pledges.length}</span></div>
-              <div className="flex justify-between"><span className="text-[#111111]/50">In ledger</span><span className="text-[#111111]">{donorContributions.filter(c => c.optInLedger).length} / {donorContributions.length}</span></div>
-            </div>
-            {showServer && <div className="p-2 bg-rose-50 border border-rose-200 rounded text-[9px] text-rose-800 leading-relaxed mt-2"><strong>Blind-pool guarantee:</strong> no column links a donor to any disbursement. The ledger is aggregate only.</div>}
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#FAF8F4] border border-[#111111]/15 space-y-1.5">
-            <h4 className="text-[11px] font-bold text-[#111111] uppercase tracking-wider">Spec Coverage</h4>
-            {['Blind pooling (4.6)', 'Cohort campaigns (4.6)', 'Recognition ledger opt-in (4.6)', 'The Match - goods & service credit (4.4)', 'Coarse locality (4.4)', 'Anonymous by default', 'No recipient linkage'].map(f => (
-              <div key={f} className="flex items-center gap-1.5 text-[10px] text-[#111111]/70">
-                <div className="w-1 h-1 rounded-full bg-[#1F6B4A]" />{f}
-              </div>
-            ))}
-          </div>
-
-          <button
-            onClick={() => { resetFlow(); setTab('home'); setShowServer(false); setScreen('tab'); }}
-            className="w-full py-2.5 text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg bg-white flex items-center justify-center gap-1.5"
-          >
-            <RotateCcw className="w-3 h-3" /> Reset Simulator
-          </button>
-        </div>
+        <DonorSettings
+          donorHash={donorHash}
+          myProfile={myProfile}
+          donorContributions={donorContributions}
+          pledges={pledges}
+          totalGiven={totalGiven}
+          showServer={showServer}
+          setShowServer={setShowServer}
+          setScreen={setScreen}
+          setTab={setTab}
+          resetFlow={resetFlow}
+          handleDownloadDonations={handleDownloadDonations}
+        />
       );
     }
 
@@ -501,106 +457,29 @@ export const DonorView: React.FC = () => {
 
     if (tab === 'leaders') {
       return (
-        <div className="p-5 space-y-4">
-          <div className="rounded-2xl bg-gradient-to-br from-[#1F6B4A] to-[#18553a] p-5 text-white space-y-2">
-            <Trophy className="w-6 h-6 text-white/80" />
-            <h2 className="font-serif text-xl font-bold leading-tight">Community Leaders</h2>
-            <p className="text-[12px] text-white/70 leading-relaxed">Opt-in recognition. Aggregate totals only. No recipient linkage.</p>
-          </div>
+        <DonorLeaders
+          leaderboard={leaderboard}
+          myProfile={myProfile}
+          editingProfile={editingProfile}
+          setEditingProfile={setEditingProfile}
+          profileName={profileName}
+          setProfileName={setProfileName}
+          profileOptIn={profileOptIn}
+          setProfileOptIn={setProfileOptIn}
+          profileSaving={profileSaving}
+          saveProfile={saveProfile}
+        />
+      );
+    }
 
-          <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-2xl space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="text-[11px] font-mono uppercase font-bold text-[#111111]/60 tracking-wider">Your standing</div>
-              {!editingProfile && (
-                <button onClick={() => setEditingProfile(true)} className="text-[10px] text-[#1F6B4A] hover:underline flex items-center gap-1">
-                  <Edit2 className="w-3 h-3" /> Edit
-                </button>
-              )}
-            </div>
-
-            {!editingProfile ? (
-              myProfile?.opt_in_ledger ? (
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[13px]">
-                    <span className="text-[#111111]/60">Display name</span>
-                    <span className="font-semibold text-[#111111]">{myProfile.display_name || 'Anonymous Contributor'}</span>
-                  </div>
-                  <div className="flex justify-between text-[13px] border-t border-[#111111]/10 pt-1.5">
-                    <span className="text-[#111111]/60">Listed publicly</span>
-                    <span className="font-semibold text-[#1F6B4A]">Yes</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-3 bg-[#FAF8F4] rounded-lg border border-[#111111]/10">
-                  <p className="text-[11px] text-[#111111]/70 leading-relaxed">
-                    You are not in the public leaderboard. Your contributions are still counted and pooled.
-                  </p>
-                  <button onClick={() => setEditingProfile(true)} className="mt-2 w-full py-2 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-lg text-[11px] font-semibold">
-                    Join the leaderboard
-                  </button>
-                </div>
-              )
-            ) : (
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-mono uppercase text-[#111111]/50">Display name (optional)</label>
-                  <input
-                    type="text"
-                    value={profileName}
-                    onChange={e => setProfileName(e.target.value.slice(0, 60))}
-                    placeholder="e.g. Nairobi Tech Workers"
-                    className="w-full bg-white border border-[#111111]/15 rounded-xl px-3 py-2.5 text-xs font-mono focus:ring-2 focus:ring-[#1F6B4A] outline-none"
-                  />
-                  <p className="text-[11px] text-[#111111]/50">Leave blank to appear as "Anonymous Contributor".</p>
-                </div>
-                <label className="flex items-start gap-3 p-3 bg-[#FAF8F4] border border-[#111111]/10 rounded-xl cursor-pointer">
-                  <input type="checkbox" checked={profileOptIn} onChange={e => setProfileOptIn(e.target.checked)} className="mt-0.5 accent-[#1F6B4A]" />
-                  <div className="flex-1">
-                    <div className="text-[13px] font-semibold text-[#111111]">Show me on the public leaderboard</div>
-                    <div className="text-[11px] text-[#111111]/50 mt-0.5">Only your total given and gift count are shown. Never a recipient link.</div>
-                  </div>
-                </label>
-                <div className="flex gap-2">
-                  <button onClick={() => { setEditingProfile(false); setProfileName(myProfile?.display_name || ''); setProfileOptIn(myProfile?.opt_in_ledger || false); }} className="flex-1 py-2 bg-white border border-[#111111]/20 text-[#111111] rounded-lg text-[11px] font-medium">Cancel</button>
-                  <button onClick={saveProfile} disabled={profileSaving} className="flex-1 py-2 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-lg text-[11px] font-semibold disabled:opacity-50">{profileSaving ? 'Saving...' : 'Save'}</button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-2xl space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-mono uppercase font-bold text-[#111111]/60 tracking-wider">Top contributors</h3>
-              <span className="text-[10px] font-mono bg-[#DCE8E0] text-[#1F6B4A] px-1.5 py-0.5 rounded">Opt-in</span>
-            </div>
-            {leaderboard.length === 0 ? (
-              <EmptyState Icon={Trophy} title="No opt-in donors yet" body="Be the first to appear here." compact />
-            ) : (
-              <div className="space-y-1">
-                {leaderboard.map((entry, idx) => (
-                  <div key={`${entry.display_name}-${idx}`} className="flex items-center gap-3 py-2 border-b border-[#111111]/5 last:border-0">
-                    <div className="w-6 text-center font-mono text-[11px] font-bold text-[#111111]/40">#{idx + 1}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-semibold text-[#111111] truncate">{entry.display_name}</div>
-                      <div className="text-[11px] font-mono text-[#111111]/50">{entry.gift_count} gift{entry.gift_count !== 1 ? 's' : ''}</div>
-                    </div>
-                    <div className="text-[13px] font-mono font-bold text-[#1F6B4A] shrink-0">KES {(entry.total_pence / 100).toLocaleString()}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl">
-            <div className="text-[12px] font-bold text-rose-900 mb-1">What the leaderboard does NOT show</div>
-            <ul className="text-[12px] text-rose-900/80 leading-relaxed space-y-0.5">
-              <li>* Which specific bills or recipients your money funded</li>
-              <li>* Per-contribution timestamps or categories</li>
-              <li>* Any identification of who received the resources</li>
-            </ul>
-            <p className="text-[11px] text-rose-900/60 pt-1.5 border-t border-rose-200 mt-1.5">Aggregate totals only. Recipient dignity comes first.</p>
-          </div>
-        </div>
+    if (tab === 'impact') {
+      return (
+        <DonorImpact
+          impactStats={impactStats}
+          distribution={distribution}
+          donorContributions={donorContributions}
+          openLedgerModal={openLedgerModal}
+        />
       );
     }
 
