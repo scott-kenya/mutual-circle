@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { STAFF_CREDS } from '../../services/auth';
 import { DetailModal } from './DetailModal';
@@ -10,6 +10,7 @@ import {
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { AppBottomNav } from '../layout/AppBottomNav';
+import { ConsoleQueue } from './ConsoleQueue';
 import { SkeletonList } from '../Shared/Skeleton';
 import { useToast } from '../Shared/Toast';
 import { EmptyState } from '../Shared/EmptyState';
@@ -78,7 +79,7 @@ export const ConsoleView: React.FC = () => {
   useEffect(() => {
     if (tab !== 'partners') return;
 
-    // Demo partner keys have no real session — skip the fetch entirely
+    // Demo partner keys have no real session â€” skip the fetch entirely
     // so we do not spam the console with 401s and can render an
     // honest "not available in demo" empty state.
     if (selectedPartner.includes('demo-key')) {
@@ -264,112 +265,24 @@ export const ConsoleView: React.FC = () => {
   );
 
   const renderFulfilment = () => (
-    <div className="p-4 space-y-3">
-      <div className="flex items-center gap-1 overflow-x-auto pb-1">
-        {([{ id: 'all' as const, l: 'All' }, { id: 'swap' as const, l: 'Swap' }, { id: 'pool' as const, l: 'Pool' }, { id: 'pending' as const, l: 'Pending' }, { id: 'dispatched' as const, l: 'Sent' }]).map(f => (
-          <button key={f.id} onClick={() => setFilter(f.id)} className={'px-2.5 py-1 rounded-md text-[11px] whitespace-nowrap font-medium ' + (filter === f.id ? 'bg-[#111111] text-white' : 'bg-black/5 text-[#111111]/70')}>{f.l}</button>
-        ))}
-        <button onClick={() => setEmptyQueueMode(!emptyQueueMode)} className="ml-auto px-2 py-1 rounded-md text-[11px] font-mono border border-[#111111]/15 bg-white whitespace-nowrap shrink-0">{emptyQueueMode ? 'Restore' : 'Empty'}</button>
-      </div>
-
-      {receipt && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-2">
-          <CheckCircle className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0"><div className="text-[11px] font-bold text-emerald-900">Dispatched</div><div className="text-[11px] font-mono text-emerald-900/80 truncate">{receipt}</div></div>
-          <button onClick={() => setReceipt(null)} className="text-emerald-700 shrink-0" aria-label="Dismiss"><X className="w-3 h-3" /></button>
-        </div>
-      )}
-
-      {awaitingPledges.length > 0 && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
-          <div className="text-[11px] font-bold text-amber-900 flex items-center gap-1"><Package className="w-3 h-3" /> Incoming pledges ({awaitingPledges.length})</div>
-          {awaitingPledges.map(p => (
-            <div key={p.id} className="p-2 bg-white border border-[#111111]/10 rounded-lg flex justify-between items-start gap-2">
-              <div className="min-w-0 flex-1"><div className="text-[11px] font-semibold text-[#111111] truncate">{p.description}</div><div className="text-[11px] font-mono text-[#111111]/50">{p.locality} * {p.type === 'service_credit' ? 'credit' : 'goods'}</div></div>
-              <button onClick={() => setMatchingPledge({ id: p.id, description: p.description, locality: p.locality, type: p.type })} className="px-2 py-1 bg-amber-700 text-white rounded text-[10px] font-semibold whitespace-nowrap">Match</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {matchInterests && matchInterests.length > 0 && (
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-2">
-          <div className="flex justify-between items-center">
-            <div className="text-[11px] font-bold text-blue-900 flex items-center gap-1"><Users className="w-3 h-3" /> Match interests</div>
-            <div className="text-[11px] font-mono text-blue-900/60">
-              {matchInterests.filter(m => m.status === 'pending').length} pending * {matchInterests.filter(m => m.status === 'contacted').length} contacted * {matchInterests.filter(m => m.status === 'closed').length} closed
-            </div>
-          </div>
-          {matchInterests.slice(0, 4).map(m => (
-            <div key={m.id} className={'p-2 rounded-lg border ' + (m.status === 'pending' ? 'bg-white border-[#111111]/10' : m.status === 'contacted' ? 'bg-amber-50 border-amber-200' : 'bg-[#FAF8F4] border-[#111111]/5 opacity-70')}>
-              <div className="flex justify-between items-start gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-semibold text-[#111111] truncate">{m.title}</div>
-                  <div className="text-[11px] font-mono text-[#111111]/50">{m.timestamp} * token {m.tokenHash.slice(0, 8)}...</div>
-                </div>
-                <span className={'text-[10px] font-mono uppercase px-1.5 py-0.5 rounded shrink-0 ' + (m.status === 'pending' ? 'bg-blue-100 text-blue-800' : m.status === 'contacted' ? 'bg-amber-100 text-amber-800' : 'bg-black/5 text-[#111111]/50')}>{m.status}</span>
-              </div>
-              {m.status === 'pending' && (
-                <div className="flex gap-1 mt-1.5">
-                  <button onClick={async () => { const r = await closeMatchInterest(m.id, 'contacted'); push(r.ok ? { kind: 'success', message: 'Marked as contacted' } : { kind: 'error', message: r.reason ?? 'Update failed' }); }} className="flex-1 py-1 bg-amber-700 hover:bg-amber-800 text-white rounded text-[10px] font-semibold">Mark contacted</button>
-                  <button onClick={async () => { const r = await closeMatchInterest(m.id, 'closed'); push(r.ok ? { kind: 'success', message: 'Case closed' } : { kind: 'error', message: r.reason ?? 'Update failed' }); }} className="flex-1 py-1 bg-white border border-[#111111]/20 rounded text-[10px] font-medium">Close</button>
-                </div>
-              )}
-              {m.status === 'contacted' && (
-                <button onClick={async () => { const r = await closeMatchInterest(m.id, 'closed'); push(r.ok ? { kind: 'success', message: 'Case closed' } : { kind: 'error', message: r.reason ?? 'Update failed' }); }} className="w-full mt-1.5 py-1 bg-white border border-[#111111]/20 rounded text-[10px] font-medium">Close case</button>
-              )}
-            </div>
-          ))}
-          <div className="text-[11px] text-blue-900/70 leading-relaxed">Opt-in disclosure only. Provider must reach out within 48h.</div>
-        </div>
-      )}
-
-      {filteredPool.length === 0 && filteredSwap.length === 0 ? (
-        <EmptyState Icon={Activity} title="Queue empty" body="All requests have been processed." />
-      ) : (
-        <div className="space-y-2">
-          {filteredPool.map(r => {
-            const canAct = r.status === 'verified';
-            const isVoucher = r.status === 'voucher_issued';
-            const isPending = r.status === 'pending_check';
-            const isWithdrawn = r.status === 'withdrawn';
-            const isSent = r.status === 'submitted_to_partner';
-            return (
-              <div key={r.id} className="p-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-2">
-                <div className="flex items-center justify-between"><span className="font-mono text-[11px] text-[#111111]/50">{r.id}</span><span className="text-[10px] font-mono bg-black/5 px-1.5 py-0.5 rounded">T{r.tier}</span></div>
-                <div><div className="font-bold text-[12px] text-[#111111] uppercase">{r.category.replace('_', ' ')}</div><div className="text-[11px] font-mono text-[#1F6B4A]">{r.hashedObjectId}</div></div>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-[#111111]"><span className="text-[9px] text-[#111111]/50 mr-0.5">KES</span><span className="text-sm tabular-nums">{r.amount.toLocaleString()}</span></span>
-                  <span className={'px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ' + (isSent ? 'bg-emerald-50 text-emerald-800' : isPending ? 'bg-amber-50 text-amber-800' : isWithdrawn ? 'bg-[#FAF8F4] text-[#111111]/40' : isVoucher ? 'bg-purple-50 text-purple-800' : 'bg-blue-50 text-blue-800')}>{r.status.replace(/_/g, ' ')}</span>
-                </div>
-                {canAct ? (
-                  <div className="grid grid-cols-2 gap-1">
-                    <button onClick={() => handleDispatch(r.id)} className="py-2 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1"><Send className="w-3 h-3" /> Dispatch</button>
-                    <button onClick={() => { setIssueModal({ requestId: r.id, amount: r.amount }); setIssueSuccess(null); }} className="py-2 bg-white border border-[#111111]/20 text-[#111111] rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1"><Store className="w-3 h-3" /> Voucher</button>
-                  </div>
-                ) : isPending ? (
-                  <div className="w-full py-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-[11px] font-medium text-center">Awaiting Audit (Tier 3 OCR)</div>
-                ) : isWithdrawn ? (
-                  <div className="w-full py-2 bg-[#FAF8F4] text-[#111111]/40 rounded-lg text-[11px] font-mono text-center">Withdrawn</div>
-                ) : isVoucher ? (
-                  <div className="w-full py-2 bg-purple-50 border border-purple-200 text-purple-800 rounded-lg text-[11px] font-medium text-center">Voucher issued to partner</div>
-                ) : (
-                  <div className="w-full py-2 bg-[#FAF8F4] text-[#111111]/40 rounded-lg text-[11px] font-mono text-center">Dispatched</div>
-                )}
-              </div>
-            );
-          })}
-          {filteredSwap.map(r => (
-            <div key={r.id} className="p-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-2 opacity-90">
-              <div className="flex items-center justify-between"><span className="font-mono text-[11px] text-[#111111]/50">{r.id}</span><span className="text-[10px] font-mono bg-black/5 px-1.5 py-0.5 rounded">SWAP</span></div>
-              <div><div className="font-bold text-[12px] text-[#111111]">{r.bundleCategory}</div><div className="text-[11px] font-mono text-[#111111]/60">{r.lockerLocation}</div></div>
-              <div className="flex items-center justify-between"><span className="font-mono text-[11px] text-[#111111]/50">Free</span><span className={'px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ' + (r.status === 'withdrawn' ? 'bg-[#FAF8F4] text-[#111111]/40' : 'bg-emerald-50 text-emerald-800')}>{r.status}</span></div>
-              <div className="w-full py-2 bg-[#FAF8F4] text-[#111111]/40 rounded-lg text-[11px] font-mono text-center">{r.status === 'withdrawn' ? 'Withdrawn' : 'Self-collect'}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <ConsoleQueue
+      filter={filter}
+      setFilter={setFilter}
+      emptyQueueMode={emptyQueueMode}
+      setEmptyQueueMode={setEmptyQueueMode}
+      receipt={receipt}
+      setReceipt={setReceipt}
+      awaitingPledges={awaitingPledges}
+      setMatchingPledge={setMatchingPledge}
+      matchInterests={matchInterests}
+      closeMatchInterest={closeMatchInterest}
+      filteredPool={filteredPool}
+      filteredSwap={filteredSwap}
+      handleDispatch={handleDispatch}
+      setIssueModal={setIssueModal}
+      setIssueSuccess={setIssueSuccess}
+      push={push}
+    />
   );
 
   const renderAudit = () => (
@@ -659,7 +572,7 @@ export const ConsoleView: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <div className="text-[11px] font-semibold text-[#111111] capitalize truncate">{details}</div>
                       <div className="text-[11px] font-mono text-[#111111]/50 truncate">
-                        {String(r.id).slice(0, 8)}Ã¢â‚¬Â¦ Ã‚Â· {(r.status || '').replace(/_/g, ' ')}
+                        {String(r.id).slice(0, 8)}ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Ãƒâ€šÃ‚Â· {(r.status || '').replace(/_/g, ' ')}
                       </div>
                     </div>
                     {r.amount_pence !== undefined && r.amount_pence > 0 && (
