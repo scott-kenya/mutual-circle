@@ -36,11 +36,13 @@ const mapStatus = (s: string, type: string): any => {
 export const RequesterHome: React.FC<RequesterHomeProps> = (props) => {
   return (
     <div className="space-y-6 pb-20">
-      <div className="rounded-[22px] bg-pine p-6 text-white shadow-soft">
-        <HeartHandshake className="w-6 h-6 text-lime mb-2" />
-        <h2 className="text-2xl font-bold leading-tight">Welcome back</h2>
-        <p className="text-sm text-white/80 mt-1">Your private token:</p>
-        <p className="text-xs font-mono text-lime mt-1 truncate">{props.tokenHash}</p>
+      <div className="relative overflow-hidden rounded-[22px] bg-pine p-6 text-white shadow-soft">
+        {/* Glass decoration */}
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+        <HeartHandshake className="w-6 h-6 text-lime mb-2 relative z-10" />
+        <h2 className="text-2xl font-bold leading-tight relative z-10">Welcome back</h2>
+        <p className="text-sm text-white/80 mt-1 relative z-10">Your private token:</p>
+        <p className="text-xs font-mono text-lime mt-1 truncate relative z-10">{props.tokenHash}</p>
       </div>
 
       {props.unseenRedemptions.length > 0 && (
@@ -86,7 +88,7 @@ export const RequesterHome: React.FC<RequesterHomeProps> = (props) => {
               key={item.id}
               onClick={() => props.goTab(item.id)}
               disabled={props.rateLimited && (item.id === 'swap' || item.id === 'pool')}
-              className="bg-surface p-4 rounded-[16px] border border-tile text-left hover:border-pine transition-colors disabled:opacity-50"
+              className="group bg-surface p-4 rounded-[16px] border border-tile text-left hover:border-pine hover:shadow-soft hover:-translate-y-1 transition-all duration-200 disabled:opacity-50 disabled:hover:transform-none"
             >
               <I className="w-5 h-5 text-pine mb-2" />
               <div className="text-sm font-semibold text-ink">{item.l}</div>
@@ -133,7 +135,7 @@ export const RequesterHome: React.FC<RequesterHomeProps> = (props) => {
               const canSettle = r.type === 'pool' && r.status === 'fulfilled' && r.paymentStatus !== 'paid';
               
               return (
-                <div key={r.id} className="p-4 border-b border-tile last:border-0 space-y-3">
+                <div key={r.id} className="p-4 border-b border-tile last:border-0 space-y-3 hover:bg-tint/30 transition-colors">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-10 h-10 rounded-xl bg-canvas flex items-center justify-center text-pine shrink-0">

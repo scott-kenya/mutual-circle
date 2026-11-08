@@ -84,8 +84,10 @@ export const DonorHome: React.FC<DonorHomeProps> = (props) => {
   return (
     <div className="space-y-4 pb-4">
       {/* Hero — impact summary or onboarding */}
-      <div className="rounded-[22px] bg-gradient-to-br from-pine to-pine-deep p-5 text-white space-y-3">
-        <div className="flex items-center justify-between">
+      <div className="relative overflow-hidden rounded-[22px] bg-gradient-to-br from-pine to-pine-deep p-6 text-white shadow-soft space-y-3">
+        {/* Glass decoration */}
+        <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/5 blur-3xl pointer-events-none" />
+        <div className="flex items-center justify-between relative z-10">
           <HeartHandshake className="w-6 h-6 text-white/80" />
           <button
             onClick={props.openLedgerModal}
@@ -268,7 +270,7 @@ export const DonorHome: React.FC<DonorHomeProps> = (props) => {
           {props.campaigns.map(c => {
             const pct = Math.round((c.pooledAmount / c.targetAmount) * 100);
             return (
-              <Card key={c.id} className="space-y-3">
+              <Card key={c.id} className="space-y-3 hover:shadow-soft hover:-translate-y-1 transition-all duration-200">
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold text-pine uppercase tracking-wider">Cohort</div>
@@ -337,7 +339,7 @@ export const DonorHome: React.FC<DonorHomeProps> = (props) => {
             <button
               key={item.id}
               onClick={() => props.setSelectedActivity(item)}
-              className="w-full p-4 bg-surface border border-tile rounded-[16px] flex items-start gap-3 text-left hover:border-pine transition-colors"
+              className="w-full p-4 bg-surface border border-tile rounded-[16px] flex items-start gap-3 text-left hover:border-pine hover:shadow-soft transition-all duration-200"
             >
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.kind === 'donation' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
                 {item.kind === 'donation' ? <Wallet className="w-4 h-4" /> : <Package className="w-4 h-4" />}

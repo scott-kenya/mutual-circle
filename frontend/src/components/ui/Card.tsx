@@ -13,7 +13,7 @@ export const Card: React.FC<CardProps> = ({ children, className = '', variant = 
     pine: "bg-pine text-white"
   };
   return (
-    <div className={`rounded-[22px] p-5 ${variants[variant]} ${className}`}>
+    <div className={`rounded-[22px] p-5 transition-all duration-300 ${variants[variant]} ${className}`}>
       {children}
     </div>
   );

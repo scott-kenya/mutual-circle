@@ -15,7 +15,7 @@ export const Button: React.FC<ButtonProps> = ({
     ghost: "text-pine hover:bg-tint"
   };
   return (
-    <button className={`${base} ${variants[variant]} ${fullWidth ? 'w-full' : ''} ${className}`} {...props}>
+    <button className={`${base} active:scale-[0.98] transition-all duration-200 ${variants[variant]} ${fullWidth ? 'w-full' : ''} ${className}`} {...props}>
       {children}
     </button>
   );
