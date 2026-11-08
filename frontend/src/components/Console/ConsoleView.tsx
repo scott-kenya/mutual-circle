@@ -7,6 +7,8 @@ import {
   Download, X, Layers, Boxes, Package, Truck, Check, Eye, EyeOff, RotateCcw,
   LogIn, LogOut, Store, KeyRound, Lock, Building2, RefreshCw, Zap, ChevronRight,
 } from 'lucide-react';
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
 import { SkeletonList } from '../Shared/Skeleton';
 import { useToast } from '../Shared/Toast';
 import { EmptyState } from '../Shared/EmptyState';
@@ -100,55 +102,89 @@ export const ConsoleView: React.FC = () => {
 
   if (!staffRole) {
     return (
-      <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6">
-        <div className="w-full max-w-[340px] bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black shrink-0">
-          <div className="bg-[#FAF8F4] rounded-[2rem] overflow-hidden flex flex-col h-[620px] text-[#111111]">
-            <div className="px-5 pt-3 pb-1 flex items-center justify-between text-[11px] font-medium text-[#111111]/40">
-              <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              <span className="text-[10px] font-mono bg-[#DCE8E0] text-[#1F6B4A] px-1.5 py-0.5 rounded uppercase font-bold">Staff Only</span>
+      <div className="min-h-[70vh] flex items-center justify-center w-full animate-in fade-in zoom-in-95 duration-500">
+        <div className="w-full max-w-md space-y-6">
+          <div className="text-center space-y-3">
+            <div className="w-16 h-16 bg-pine text-white rounded-2xl flex items-center justify-center mx-auto shadow-soft mb-4 rotate-3">
+              <Lock className="w-8 h-8" />
             </div>
-            <div className="flex-1 flex flex-col justify-center px-6 space-y-5">
-              <div className="text-center space-y-2">
-                <div className="w-14 h-14 bg-[#DCE8E0] border border-[#1F6B4A]/20 text-[#1F6B4A] rounded-2xl flex items-center justify-center mx-auto"><Lock className="w-7 h-7" /></div>
-                <div><h1 className="font-serif text-xl font-bold text-[#111111]">Operations Console</h1><p className="text-[10px] font-mono text-[#111111]/50 mt-1 uppercase tracking-widest">Restricted access</p></div>
-                <p className="text-[12px] text-[#111111]/60 leading-relaxed">Each role has separate credentials. No role can switch without logging out.</p>
-                
-              </div>
-              <form onSubmit={handleLogin} className="space-y-3 bg-white border border-[#111111]/5 shadow-sm rounded-xl p-4">
-                <div>
-                  <label className="text-[10px] font-mono uppercase text-[#111111]/50">Role</label>
-                  <div className="grid grid-cols-3 gap-1 mt-1.5">
-                    {(['enrolment', 'fulfilment', 'audit'] as Role[]).map(r => (
-                      <button key={r} type="button" onClick={() => { setLoginRole(r); setLoginId(STAFF_CREDS[r].id); setLoginPin(STAFF_CREDS[r].pin); setLoginError(null); }} className={'py-1.5 rounded text-[10px] font-medium transition-colors border ' + (loginRole === r ? 'bg-[#1F6B4A] text-white border-[#1F6B4A]' : 'bg-white text-[#111111]/70 border-[#111111]/15 hover:bg-[#FAF8F4]')}>{STAFF_CREDS[r].label.split(' ')[0]}</button>
-                    ))}
-                  </div>
-                </div>
-                <div><label className="text-[10px] font-mono uppercase text-[#111111]/50">Staff ID</label><input value={loginId} onChange={e => setLoginId(e.target.value)} placeholder="Auto-filled" autoFocus className="w-full bg-[#FAF8F4] border border-[#111111]/15 rounded-lg px-3 py-2 text-xs font-mono text-[#111111] mt-1 focus:border-[#1F6B4A] outline-none focus:ring-2 focus:ring-[#1F6B4A] focus:ring-offset-0" /></div>
-                <div><label className="text-[10px] font-mono uppercase text-[#111111]/50">PIN</label><input type="password" value={loginPin} onChange={e => setLoginPin(e.target.value)} placeholder="Auto-filled" maxLength={4} className="w-full bg-[#FAF8F4] border border-[#111111]/15 rounded-lg px-3 py-2 text-xs font-mono text-[#111111] tracking-widest mt-1 focus:border-[#1F6B4A] outline-none focus:ring-2 focus:ring-[#1F6B4A] focus:ring-offset-0" /></div>
-                {loginError && <div className="p-2 bg-rose-50 border border-rose-200 rounded text-[11px] text-rose-800">{loginError}</div>}
-                <button type="submit" disabled={!loginId || !loginPin} className="w-full py-2.5 bg-[#1F6B4A] hover:bg-[#18553a] text-white rounded-lg text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"><LogIn className="w-4 h-4" /> Log in</button>
-              </form>
-            </div>
+            <h1 className="text-2xl font-bold text-ink tracking-tight">Operations Console</h1>
+            <p className="text-xs font-semibold text-muted uppercase tracking-wider">Restricted access</p>
+            <p className="text-sm text-muted leading-relaxed max-w-[280px] mx-auto">
+              Each role has separate credentials. No role can switch without logging out.
+            </p>
           </div>
-        </div>
-        <div className="w-full max-w-sm space-y-3">
-          <div className="p-4 bg-white border border-[#111111]/5 shadow-sm rounded-xl space-y-2">
-            <h3 className="text-sm font-bold text-[#111111] flex items-center gap-1.5"><KeyRound className="w-4 h-4 text-[#1F6B4A]" /> Demo Credentials</h3>
-            <p className="text-[11px] text-[#111111]/60 leading-relaxed">For demonstration. Production uses SSO / MFA.</p>
-            <div className="space-y-1.5 pt-2 border-t border-[#111111]/10">
+
+          <Card className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Role</label>
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {(['enrolment', 'fulfilment', 'audit'] as Role[]).map(r => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => { setLoginRole(r); setLoginId(STAFF_CREDS[r].id); setLoginPin(STAFF_CREDS[r].pin); setLoginError(null); }}
+                      className={`py-2 rounded-lg text-xs font-semibold transition-all border ${
+                        loginRole === r ? 'bg-pine text-white border-pine shadow-soft' : 'bg-surface text-muted border-tile hover:bg-tint'
+                      }`}
+                    >
+                      {STAFF_CREDS[r].label.split(' ')[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Staff ID</label>
+                <input
+                  value={loginId}
+                  onChange={e => setLoginId(e.target.value)}
+                  placeholder="Auto-filled"
+                  autoFocus
+                  className="w-full bg-canvas border border-tile rounded-xl px-3 py-2.5 text-sm mt-2 focus:ring-2 focus:ring-pine outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">PIN</label>
+                <input
+                  type="password"
+                  value={loginPin}
+                  onChange={e => setLoginPin(e.target.value)}
+                  placeholder="Auto-filled"
+                  maxLength={4}
+                  className="w-full bg-canvas border border-tile rounded-xl px-3 py-2.5 text-sm tracking-widest mt-2 focus:ring-2 focus:ring-pine outline-none"
+                />
+              </div>
+              {loginError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-800">{loginError}</div>
+              )}
+              <Button type="submit" variant="primary" fullWidth disabled={!loginId || !loginPin}>
+                <LogIn className="w-4 h-4 mr-2" /> Log in
+              </Button>
+            </form>
+          </Card>
+
+          <Card className="space-y-2">
+            <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-pine" /> Demo Credentials
+            </h3>
+            <p className="text-xs text-muted leading-relaxed">For demonstration. Production uses SSO / MFA.</p>
+            <div className="space-y-1.5 pt-2 border-t border-tile">
               {(['enrolment', 'fulfilment', 'audit'] as Role[]).map(r => (
-                <div key={r} className="p-2 bg-[#FAF8F4] rounded-lg font-mono text-[11px]">
-                  <div className="text-[10px] uppercase text-[#111111]/50">{STAFF_CREDS[r].label}</div>
-                  <div className="flex justify-between"><span className="text-[#111111]">{STAFF_CREDS[r].id}</span><span className="text-[#111111]/60">PIN: {STAFF_CREDS[r].pin}</span></div>
+                <div key={r} className="p-2 bg-canvas rounded-lg text-xs">
+                  <div className="text-[10px] uppercase text-muted tracking-wider">{STAFF_CREDS[r].label}</div>
+                  <div className="flex justify-between font-mono">
+                    <span className="text-ink">{STAFF_CREDS[r].id}</span>
+                    <span className="text-muted">PIN: {STAFF_CREDS[r].pin}</span>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-          <div className="p-4 bg-[#FAF8F4] border border-[#111111]/15 rounded-xl space-y-1.5">
-            <h4 className="text-[11px] font-bold text-[#111111] uppercase tracking-wider">Why this exists</h4>
-            <p className="text-[11px] text-[#111111]/70 leading-relaxed">R.U.T.H 4.8: <em>"separation enforced by architecture (separate data stores and credentials), not by policy."</em></p>
-            <p className="text-[11px] text-[#111111]/70 leading-relaxed">Without a login boundary, the separation claim is theatre.</p>
-          </div>
+          </Card>
+
+          <p className="text-center text-xs text-muted leading-relaxed px-4">
+            R.U.T.H 4.8: separation enforced by architecture, not by policy.
+          </p>
         </div>
       </div>
     );
@@ -762,16 +798,12 @@ export const ConsoleView: React.FC = () => {
     <div className="w-full">
       <div className="w-full">
         <div className="bg-surface border border-tile shadow-soft rounded-[22px] overflow-hidden flex flex-col min-h-[calc(100dvh-10rem)]">
-          <div className="px-5 pt-3 pb-1 flex items-center justify-between text-[11px] font-medium text-[#111111]/60">
-            <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            <span className="text-[10px] font-mono bg-[#DCE8E0] text-[#1F6B4A] px-1.5 py-0.5 rounded uppercase font-bold">{roleLabel[staffRole as Role]}</span>
-          </div>
           <div className="px-5 py-3 border-b border-[#111111]/10 flex items-center justify-between">
             <div>
-              <h1 className="font-serif text-lg font-bold text-[#111111]">Operations</h1>
-              <p className="text-[11px] font-mono text-[#111111]/40 mt-0.5">{staffId}</p>
+              <h1 className="text-lg font-bold text-ink">Operations</h1>
+              <p className="text-xs font-mono text-muted mt-0.5">{staffId}</p>
             </div>
-            <button onClick={logoutStaff} className="text-[#111111]/40 hover:text-rose-600 p-1 rounded" aria-label="Logout" title="Logout">
+            <button onClick={logoutStaff} className="text-muted hover:text-rose-600 p-1 rounded" aria-label="Logout" title="Logout">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
