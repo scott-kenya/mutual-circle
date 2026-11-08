@@ -31,7 +31,7 @@ export const MatchTab: React.FC<MatchTabProps> = (props) => {
   const visible = props.opportunitiesWithIcons.filter(o => !props.declined.has(o.id));
 
   return (
-    <div className="space-y-4 pb-20">
+    <div className="space-y-4">
       <div>
         <h2 className="text-xl font-bold text-ink">The Match</h2>
         <p className="text-sm text-muted mt-1">Opportunities. Opt-in only.</p>
@@ -63,7 +63,7 @@ export const MatchTab: React.FC<MatchTabProps> = (props) => {
           const I = opp.Icon;
           const sent = props.matchSent === opp.id;
           return (
-            <Card key={opp.id} className="space-y-3">
+            <Card key={opp.id} className="space-y-3 hover:shadow-soft hover:-translate-y-0.5 transition-all duration-200">
               <div className="flex items-start gap-3">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${opp.accent}`}>
                   <I className="w-5 h-5" />
@@ -75,7 +75,7 @@ export const MatchTab: React.FC<MatchTabProps> = (props) => {
                 <button
                   onClick={() => props.setDeclined(s => new Set(s).add(opp.id))}
                   aria-label="Not interested"
-                  className="text-muted hover:text-ink shrink-0 transition-colors"
+                  className="p-2 rounded-full text-muted hover:text-rose-600 hover:bg-rose-50 shrink-0 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
