@@ -635,7 +635,7 @@ export const ConsoleView: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <div className="text-[11px] font-semibold text-[#111111] capitalize truncate">{details}</div>
                       <div className="text-[11px] font-mono text-[#111111]/50 truncate">
-                        {String(r.id).slice(0, 8)}… · {(r.status || '').replace(/_/g, ' ')}
+                        {String(r.id).slice(0, 8)}â€¦ Â· {(r.status || '').replace(/_/g, ' ')}
                       </div>
                     </div>
                     {r.amount_pence !== undefined && r.amount_pence > 0 && (
@@ -810,23 +810,26 @@ export const ConsoleView: React.FC = () => {
   };
 
   return (
-    <div className="w-full">
-      <div className="w-full">
-        <div className="bg-surface border border-tile shadow-soft rounded-[22px] overflow-hidden flex flex-col min-h-[calc(100dvh-10rem)]">
-          <div className="px-5 py-3 border-b border-[#111111]/10 flex items-center justify-between">
+    <>
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="w-full flex flex-col gap-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-bold text-ink">Operations</h1>
-              <p className="text-xs font-mono text-muted mt-0.5">{staffId}</p>
+              <h1 className="text-2xl font-bold text-ink">Operations</h1>
+              <p className="text-sm text-muted mt-1">
+                {roleLabel[staffRole as Role]} - {staffId}
+              </p>
             </div>
-            <button onClick={logoutStaff} className="text-muted hover:text-rose-600 p-1 rounded" aria-label="Logout" title="Logout">
-              <LogOut className="w-4 h-4" />
+            <button onClick={logoutStaff} className="p-2 rounded-full hover:bg-tint transition-colors bg-surface border border-tile shadow-sm" aria-label="Logout">
+              <LogOut className="w-5 h-5 text-ink" />
             </button>
           </div>
-          <div key={staffRole + tab + auditSub + moreTab} className="flex-1 overflow-y-auto animate-in fade-in duration-200">{renderContent()}</div>
-          <AppBottomNav tabs={consoleTabs} active={tab} onChange={handleConsoleTabChange} />
+          <div key={staffRole + tab + auditSub + moreTab} className="animate-in fade-in duration-200">
+            {renderContent()}
+          </div>
         </div>
       </div>
-
+      <AppBottomNav tabs={consoleTabs} active={tab} onChange={handleConsoleTabChange} />
       {selectedDetail && (
         <DetailModal type={selectedDetail.type} item={selectedDetail.item} onClose={() => setSelectedDetail(null)}/>
       )}
@@ -917,10 +920,9 @@ export const ConsoleView: React.FC = () => {
         </div>
       )}
 
-    </div>
+    </>
   );
 };
-
 
 
 
