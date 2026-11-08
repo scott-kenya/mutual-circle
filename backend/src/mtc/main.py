@@ -142,6 +142,34 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# ─── Unhandled-exception handler with CORS headers ─────────────────────────
+# FastAPI's default 500 response does not include Access-Control-Allow-Origin
+# because the CORSMiddleware's response wrapper runs before this handler. Browsers
+# then report the 500 as a "CORS error", which is misleading. This handler
+# manually adds CORS headers so the client sees the actual HTTP 500.
+import re as _re_for_cors
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    origin = request.headers.get("origin")
+    cors_headers = {}
+    if origin and _re_for_cors.match(
+        r"^(https://lowellowuor\.github\.io|http://(localhost|127\.0\.0\.1)(:\d+)?)$",
+        origin,
+    ):
+        cors_headers["Access-Control-Allow-Origin"] = origin
+        cors_headers["Access-Control-Allow-Credentials"] = "true"
+    logger.exception(
+        "Unhandled exception on %s %s: %s",
+        request.method, request.url.path, type(exc).__name__,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "path": request.url.path},
+        headers=cors_headers,
+    )
+
+
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     """Normalize every HTTPException into {ok: false, reason, status}.
@@ -176,6 +204,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=[
+        # Dev origins — Vite (localhost:3000) and direct access
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_origin_regex=r"^(https://lowellowuor\.github\.io|http://(localhost|127\.0\.0\.1)(:\d+)?)$",
     allow_credentials=True,
     allow_methods=["*"],
