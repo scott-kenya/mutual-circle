@@ -42,3 +42,18 @@
     font-weight: 700;
   }
 }
+
+/* Simulator inputs: prevent scroll-on-focus from pushing the panel
+   out of view. The 80px margin-top leaves room for the AppShell
+   header (56px) + panel status bar (~24px) so the input is still
+   fully visible after any scroll. */
+input, textarea {
+  scroll-margin-top: 80px;
+}
+
+/* Prevent scroll chaining from simulator panels into the AppShell
+   page scroll. When the message list hits its end, the parent
+   should not start scrolling. */
+.overscroll-contain {
+  overscroll-behavior: contain;
+}

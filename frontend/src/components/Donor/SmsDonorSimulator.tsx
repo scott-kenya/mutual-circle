@@ -32,7 +32,7 @@ export const SmsDonorSimulator: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   const sysReply = (text: string) => {
@@ -213,9 +213,9 @@ export const SmsDonorSimulator: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center">
-      <div className="w-[340px] max-w-full bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black">
-        <div className="bg-white rounded-[2rem] overflow-hidden flex flex-col h-[600px]">
+    <div className="flex flex-col gap-4 w-full">
+      <div className="w-full">
+        <div className="bg-white rounded-none overflow-hidden flex flex-col h-[500px] overflow-hidden">
           <div className="bg-[#111111] text-white px-4 pt-2 pb-1 flex items-center justify-between text-[10px] font-medium">
             <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             <div className="flex items-center gap-1">
@@ -249,7 +249,7 @@ export const SmsDonorSimulator: React.FC = () => {
               {quickReplies[state].map(q => (
                 <button
                   key={q}
-                  onClick={() => { setInput(q); inputRef.current?.focus(); }}
+                  onClick={() => { setInput(q); inputRef.current?.focus({ preventScroll: true }); }}
                   className="px-2.5 py-1 text-[10px] font-mono border border-[#1F6B4A]/30 text-[#1F6B4A] rounded-full whitespace-nowrap hover:bg-[#1F6B4A]/10"
                 >
                   {q}

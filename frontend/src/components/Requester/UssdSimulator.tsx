@@ -56,7 +56,7 @@ export const UssdSimulator: React.FC = () => {
     if (sessionActive && elapsed >= SESSION_TIMEOUT) endSession('Session expired.');
   }, [elapsed, sessionActive]);
 
-  useEffect(() => { inputRef.current?.focus(); }, [screen]);
+  useEffect(() => { inputRef.current?.focus({ preventScroll: true }); }, [screen]);
 
   const startSession = async () => {
     setSessionActive(true);
@@ -366,9 +366,9 @@ export const UssdSimulator: React.FC = () => {
   const showWelcomeDial = !sessionActive && screen === 'welcome';
 
   return (
-    <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6">
-      <div className="w-full max-w-[340px] bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black shrink-0">
-        <div className="bg-[#0a0a0a] rounded-[2rem] overflow-hidden flex flex-col h-[600px] text-white">
+    <div className="flex flex-col gap-4 w-full">
+      <div className="w-full">
+        <div className="bg-[#0a0a0a] rounded-none overflow-hidden flex flex-col h-[500px] overflow-hidden text-white">
 
           <div className="bg-[#000] text-white/80 px-4 pt-2 pb-1 flex items-center justify-between text-[10px] font-medium">
             <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>

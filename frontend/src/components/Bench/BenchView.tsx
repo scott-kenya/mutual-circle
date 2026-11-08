@@ -230,9 +230,9 @@ export const BenchView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6">
-      <div className="w-full max-w-[340px] bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black shrink-0">
-        <div className="bg-[#FAF8F4] rounded-[2rem] overflow-hidden flex flex-col h-[620px]">
+    <div className="flex flex-col gap-4 w-full">
+      <div className="w-full">
+        <div className="bg-[#FAF8F4] rounded-none overflow-hidden flex flex-col h-[500px] overflow-hidden">
           <div className="px-5 pt-3 pb-1 flex items-center justify-between text-[10px] font-medium text-[#111111]/60">
             <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             <span className="text-[8px] font-mono bg-[#DCE8E0] text-[#1F6B4A] px-1.5 py-0.5 rounded uppercase font-bold">

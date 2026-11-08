@@ -27,7 +27,7 @@ export const SmsSimulator: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, [messages]);
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -241,9 +241,9 @@ export const SmsSimulator: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6">
-      <div className="w-full max-w-[340px] bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black shrink-0">
-        <div className="bg-white rounded-[2rem] overflow-hidden flex flex-col h-[600px]">
+    <div className="flex flex-col gap-4 w-full">
+      <div className="w-full">
+        <div className="bg-white rounded-none overflow-hidden flex flex-col h-[500px] overflow-hidden">
           <div className="bg-[#111111] text-white px-4 pt-2 pb-1 flex items-center justify-between text-[10px] font-medium">
             <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             <div className="flex items-center gap-1"><Signal className="w-3 h-3" /><Wifi className="w-3 h-3" /><Battery className="w-3 h-3" /></div>
@@ -266,7 +266,7 @@ export const SmsSimulator: React.FC = () => {
           </div>
           {quickReplies[state].length > 0 && (
             <div className="px-2 py-1.5 bg-white border-t border-[#111111]/10 flex gap-1.5 overflow-x-auto">
-              {quickReplies[state].map(q => (<button key={q} onClick={() => { setInput(q); inputRef.current?.focus(); }} className="px-2.5 py-1 text-[10px] font-mono border border-[#1F6B4A]/30 text-[#1F6B4A] rounded-full whitespace-nowrap hover:bg-[#1F6B4A]/10">{q}</button>))}
+              {quickReplies[state].map(q => (<button key={q} onClick={() => { setInput(q); inputRef.current?.focus({ preventScroll: true }); }} className="px-2.5 py-1 text-[10px] font-mono border border-[#1F6B4A]/30 text-[#1F6B4A] rounded-full whitespace-nowrap hover:bg-[#1F6B4A]/10">{q}</button>))}
             </div>
           )}
           <form onSubmit={handleSend} className="p-2 bg-white border-t border-[#111111]/10 flex gap-1.5">

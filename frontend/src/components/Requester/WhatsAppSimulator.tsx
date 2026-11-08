@@ -58,7 +58,7 @@ export const WhatsAppSimulator: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isTyping]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, [messages, isTyping]);
 
   useEffect(() => {
     if (screen !== 'chat' || windowRemaining <= 0) return;
@@ -372,9 +372,9 @@ export const WhatsAppSimulator: React.FC = () => {
   const remainingSeconds = windowRemaining % 60;
 
   return (
-    <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6">
-      <div className="w-full max-w-[340px] bg-[#1a1a1a] rounded-[2.5rem] p-3 shadow-2xl border-[10px] border-black shrink-0">
-        <div className="bg-[#ECE5DD] rounded-[2rem] overflow-hidden flex flex-col h-[600px]">
+    <div className="flex flex-col gap-4 w-full">
+      <div className="w-full">
+        <div className="bg-[#ECE5DD] rounded-none overflow-hidden flex flex-col h-[500px] overflow-hidden">
 
           <div className="bg-[#075E54] text-white px-4 py-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#25D366] flex items-center justify-center text-white text-xs font-bold">MC</div>
