@@ -34,6 +34,8 @@ const mapStatus = (s: string, type: string): any => {
 };
 
 export const RequesterHome: React.FC<RequesterHomeProps> = (props) => {
+  const [showAll, setShowAll] = React.useState(false);
+
   return (
     <div className="space-y-6 pb-20">
       <div className="relative overflow-hidden rounded-[22px] bg-pine p-6 text-white shadow-soft">
@@ -122,9 +124,16 @@ export const RequesterHome: React.FC<RequesterHomeProps> = (props) => {
 
       {props.mergedHistory.length > 0 && (
         <div>
-          <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Recent Activity</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">Recent Activity</h3>
+            {props.mergedHistory.length > 5 && (
+              <button onClick={() => setShowAll(!showAll)} className="text-xs font-semibold text-pine hover:underline">
+                {showAll ? 'Show less' : 'See all'}
+              </button>
+            )}
+          </div>
           <Card className="p-0 overflow-hidden">
-            {props.mergedHistory.slice(0, 5).map((r: any) => {
+            {(showAll ? props.mergedHistory : props.mergedHistory.slice(0, 5)).map((r: any) => {
               const isWithdrawn = r.status === 'withdrawn';
               const canWithdraw = r.type === 'swap' ? r.status === 'reserved' : (r.status === 'verified' || r.status === 'pending_check');
               const liveSwap: any = r.type === 'swap' ? props.swapRequests.find((s: any) => s.id === r.id) : null;
