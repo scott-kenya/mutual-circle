@@ -1,70 +1,54 @@
-import React, { useState } from 'react';
-import { AppProvider } from './context/AppContext';
-import { RequesterView } from './components/Requester/RequesterView';
-import { AppShell } from './components/layout/AppShell';
-const ConsoleView = React.lazy(() => import('./components/Console/ConsoleView').then(m => ({ default: m.ConsoleView })));
-import { DonorView } from './components/Donor/DonorView';
-const ArchitectureView = React.lazy(() => import('./components/Architecture/ArchitectureView').then(m => ({ default: m.ArchitectureView })));
-const BenchView = React.lazy(() => import('./components/Bench/BenchView').then(m => ({ default: m.BenchView })));
-const SmsSimulator = React.lazy(() => import('./components/Requester/SmsSimulator').then(m => ({ default: m.SmsSimulator })));
-const UssdSimulator = React.lazy(() => import('./components/Requester/UssdSimulator').then(m => ({ default: m.UssdSimulator })));
-const WhatsAppSimulator = React.lazy(() => import('./components/Requester/WhatsAppSimulator').then(m => ({ default: m.WhatsAppSimulator })));
+import React from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { BackendBanner } from './components/Shared/BackendBanner';
+import { AppProvider } from './context/AppContext';
 import { ToastProvider } from './components/Shared/Toast';
-import { LayoutDashboard, User, HeartHandshake, Workflow, MessageCircle, Smartphone, PhoneCall, MessageSquare, RotateCcw , Heart , Bell  , Building2 } from 'lucide-react';
 
-type View = 'requester' | 'sms' | 'ussd' | 'whatsapp' | 'console' | 'donor' | 'architecture' | 'bench';
+const PitchHarness = React.lazy(() => import('./apps/PitchHarness'));
+const RequesterApp = React.lazy(() => import('./apps/RequesterApp'));
+const DonorApp = React.lazy(() => import('./apps/DonorApp'));
+const ConsoleApp = React.lazy(() => import('./apps/ConsoleApp'));
+const SmsSimulatorApp = React.lazy(() => import('./apps/SmsSimulatorApp'));
+const UssdSimulatorApp = React.lazy(() => import('./apps/UssdSimulatorApp'));
+const WhatsAppSimulatorApp = React.lazy(() => import('./apps/WhatsAppSimulatorApp'));
+const BenchApp = React.lazy(() => import('./apps/BenchApp'));
+const ArchitectureApp = React.lazy(() => import('./apps/ArchitectureApp'));
+
+type Route = 'pitch' | 'donor' | 'admin' | 'requester' | 'sms' | 'ussd' | 'whatsapp' | 'bench' | 'architecture';
+
+function getRoute(): Route {
+  // Vite base path is /mutual-circle/, so pathname comes in as
+  // /mutual-circle/ or /mutual-circle/donor etc. Strip the base
+  // (any /word prefix that isn't one of our routes) and match
+  // on the last path segment.
+  const segments = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+  const last = segments[segments.length - 1];
+  if (last === 'pitch') return 'pitch';
+  if (last === 'donor') return 'donor';
+  if (last === 'admin') return 'admin';
+  if (last === 'sms') return 'sms';
+  if (last === 'ussd') return 'ussd';
+  if (last === 'whatsapp') return 'whatsapp';
+  if (last === 'bench') return 'bench';
+  if (last === 'architecture') return 'architecture';
+  return 'requester';
+}
 
 function App() {
-  const [currentView, setCurrentView] = useState<View>('requester');
-
-  const navItems = [
-    { id: 'requester', label: 'Mutual Circle', Icon: User },
-    { id: 'donor', label: 'Donor Portal', Icon: HeartHandshake },
-    { id: 'console', label: 'Operations', Icon: LayoutDashboard },
-    { id: 'sms', label: 'SMS', Icon: Smartphone },
-    { id: 'ussd', label: 'USSD', Icon: PhoneCall },
-    { id: 'whatsapp', label: 'WhatsApp', Icon: MessageSquare },
-    { id: 'architecture', label: 'Architecture', Icon: Workflow },
-    { id: 'bench', label: 'The Bench', Icon: MessageCircle },
-  ];
-
-  const handleReset = () => {
-    if (!window.confirm('Reset the entire demo? All state (requests, vouchers, audit log, sessions) will be cleared.')) return;
-    try { localStorage.clear(); sessionStorage.clear(); } catch (e) { console.error('[reset] storage clear failed', e); }
-    window.location.reload();
-  };
-
+  const route = getRoute();
   return (
     <ErrorBoundary>
       <AppProvider>
         <ToastProvider>
-          <AppShell 
-            currentView={currentView} 
-            onViewChange={(id) => setCurrentView(id as View)} 
-            navItems={navItems}
-          >
-            <React.Suspense fallback={<div className="p-8 text-center text-sm text-muted">Loading...</div>}>
-              {currentView === 'requester' && <RequesterView />}
-              {currentView === 'sms' && (
-                
-            <React.Suspense fallback={<div>Loading...</div>}><SmsSimulator /></React.Suspense>
-          )}
-              {currentView === 'ussd' && (
-                
-            <React.Suspense fallback={<div>Loading...</div>}><UssdSimulator /></React.Suspense>
-          )}
-              {currentView === 'whatsapp' && (
-                
-            <React.Suspense fallback={<div>Loading...</div>}><WhatsAppSimulator /></React.Suspense>
-          )}
-              {currentView === 'console' && <React.Suspense fallback={<div>Loading...</div>}><ConsoleView /></React.Suspense>}
-              {currentView === 'donor' && <DonorView />}
-              {currentView === 'architecture' && <React.Suspense fallback={<div>Loading...</div>}><ArchitectureView /></React.Suspense>}
-              {currentView === 'bench' && <React.Suspense fallback={<div>Loading...</div>}><BenchView /></React.Suspense>}
-            </React.Suspense>
-          </AppShell>
+          <React.Suspense fallback={<div className="p-8 text-center text-sm text-muted">Loading...</div>}>
+            {route === 'pitch' && <PitchHarness />}
+            {route === 'donor' && <DonorApp />}
+            {route === 'admin' && <ConsoleApp />}
+            {route === 'requester' && <RequesterApp />}
+            {route === 'sms' && <SmsSimulatorApp />}
+            {route === 'ussd' && <UssdSimulatorApp />}
+            {route === 'whatsapp' && <WhatsAppSimulatorApp />}
+            {route === 'bench' && <BenchApp />}
+            {route === 'architecture' && <ArchitectureApp />}          </React.Suspense>
         </ToastProvider>
       </AppProvider>
     </ErrorBoundary>

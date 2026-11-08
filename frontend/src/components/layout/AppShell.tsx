@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { type LucideIcon, Menu, X } from 'lucide-react';
 
 export interface NavItem {
@@ -11,6 +11,8 @@ interface AppShellProps {
   currentView: string;
   onViewChange: (id: string) => void;
   navItems: NavItem[];
+  showDrawer?: boolean;
+  showBottomNav?: boolean;
   children: React.ReactNode;
 }
 
@@ -25,7 +27,7 @@ const PAGE_TITLES: Record<string, string> = {
   bench: 'The Bench',
 };
 
-export const AppShell: React.FC<AppShellProps> = ({ currentView, onViewChange, navItems, children }) => {
+export const AppShell: React.FC<AppShellProps> = ({ currentView, onViewChange, navItems, showDrawer = true, showBottomNav = true, children }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
@@ -45,13 +47,7 @@ export const AppShell: React.FC<AppShellProps> = ({ currentView, onViewChange, n
 
         {/* Header with hamburger */}
         <header className="h-14 bg-surface/90 backdrop-blur-md border-b border-tile flex items-center justify-between px-4 shrink-0 z-20">
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="p-2 -ml-2 rounded-lg hover:bg-tint transition-colors"
-            aria-label="Open menu"
-          >
-            <Menu className="w-5 h-5 text-ink" />
-          </button>
+          {showDrawer ? (<button onClick={() => setDrawerOpen(true)} className="p-2 -ml-2 rounded-lg hover:bg-tint transition-colors" aria-label="Open menu"><Menu className="w-5 h-5 text-ink" /></button>) : (<div className="w-9" />)}
           <span className="text-base font-semibold text-ink truncate">{pageTitle}</span>
           <div className="w-9" />
         </header>
