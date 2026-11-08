@@ -100,14 +100,14 @@ Open http://localhost:3000/mutual-circle/ (or whichever URL Vite prints).
 
 ## Documentation
 
-- **`docs/api.md`** â€” API reference with auth flows and sample requests
-- `docs/auth.md` â€” four auth schemes and their roles
-- `docs/roles.md` â€” six-actor permission matrix, blind-pool invariant
-- `docs/payout.md` â€” when to dispatch vs. issue a voucher
-- `docs/tiers.md` â€” tier 1-4 assignment logic
-- `docs/deploy.md` â€” deployment walkthrough
-- `SECURITY.md` â€” known security gaps before public deployment
-- `ROADMAP.md` â€” what's shipped, what's planned
+- **`docs/api.md`**  API reference with auth flows and sample requests
+- `docs/auth.md`  four auth schemes and their roles
+- `docs/roles.md`  six-actor permission matrix, blind-pool invariant
+- `docs/payout.md`  when to dispatch vs. issue a voucher
+- `docs/tiers.md`  tier 1-4 assignment logic
+- `docs/deploy.md`  deployment walkthrough
+- `SECURITY.md`  known security gaps before public deployment
+- `ROADMAP.md`  what's shipped, what's planned
 
 ## Current limitations
 
