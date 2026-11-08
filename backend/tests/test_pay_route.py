@@ -61,6 +61,7 @@ def stk_success():
             "response_code": "0",
             "response_description": "Success",
             "customer_message": "STK prompt sent",
+            "phone": "254113661960",  # matches normalized form of +254113661960
         }
         yield m
 

@@ -13,7 +13,7 @@ from mtc.db.main import get_conn
 from mtc.main import app
 
 
-def _success_payload(checkout_id: str = "ws_CO_123", receipt: str = "RCPT123") -> dict:
+def _success_payload(checkout_id: str = "ws_CO_123", receipt: str = "RCPT123456") -> dict:
     return {
         "Body": {"stkCallback": {
             "MerchantRequestID": "M-1",
@@ -55,14 +55,19 @@ async def client(mock_conn):
 
 async def test_success_marks_request_paid(client, mock_conn):
     mock_conn.fetchval.return_value = True
-    mock_conn.fetchrow.return_value = {"target_table": "requests", "target_id": "req-uuid-1"}
+    mock_conn.fetchrow.return_value = {
+        "target_table": "requests",
+        "target_id": "req-uuid-1",
+        "amount_pence": 5000,             # matches _success_payload Amount 50.0 * 100
+        "expected_phone": "254113661960", # matches payload PhoneNumber after normalization
+    }
     mock_conn.execute.return_value = "UPDATE 1"
 
     resp = await client.post("/mpesa/stk/callback", json=_success_payload())
     assert resp.status_code == 200
     assert resp.json()["ResultCode"] == 0
     assert resp.json()["detail"]["status"] == "paid"
-    assert resp.json()["detail"]["receipt"] == "RCPT123"
+    assert resp.json()["detail"]["receipt"] == "RCPT123456"
 
     all_exec = " | ".join(str(c.args[0]) for c in mock_conn.execute.call_args_list if c.args)
     assert "UPDATE mpesa_transactions" in all_exec
