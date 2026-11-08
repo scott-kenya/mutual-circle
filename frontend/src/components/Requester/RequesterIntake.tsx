@@ -78,13 +78,18 @@ export const RequesterIntake: React.FC<RequesterIntakeProps> = (props) => {
             </Card>
             {props.otpError && <p className="text-sm text-rose-600 text-center">{props.otpError}</p>}
             
-            {/* DEV MODE: show the generated OTP so we can test locally */}
-            <div className="text-center">
-              <p className="text-xs text-muted">
-                Dev mode — your OTP is:{' '}
-                <span className="font-mono font-bold text-pine text-base tracking-widest">{props.generatedOtp}</span>
-              </p>
-            </div>
+            {/* DEV MODE: show the generated OTP in local builds only.
+                Vite's import.meta.env.DEV is true under `npm run dev`
+                and false under `npm run build`, so this block disappears
+                from production bundles automatically. */}
+            {import.meta.env.DEV && (
+              <div className="text-center">
+                <p className="text-xs text-muted">
+                  Dev mode — your OTP is:{' '}
+                  <span className="font-mono font-bold text-pine text-base tracking-widest">{props.generatedOtp}</span>
+                </p>
+              </div>
+            )}
 
             <Button type="submit" variant="primary" fullWidth className="py-4 text-base" disabled={props.otpInput.length < 4 || props.otpProcessing}>
               {props.otpProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Continue'}
