@@ -278,60 +278,6 @@ export const BenchView: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <div className="w-full max-w-sm space-y-3">
-        <div className="p-4 bg-white border border-[#111111]/15 rounded-xl space-y-2">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#111111] flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-purple-600" /> Isolation View
-            </h3>
-            <button
-              onClick={() => setShowServer(!showServer)}
-              className="text-[10px] text-purple-600 hover:underline flex items-center gap-1"
-            >
-              {showServer ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-              {showServer ? 'Hide' : 'Reveal'}
-            </button>
-          </div>
-          <div className="space-y-1.5 pt-2 border-t border-[#111111]/10 font-mono text-[10px]">
-            <div className="flex justify-between"><span className="text-[#111111]/50">System</span><span className="font-bold text-purple-700">Bench (isolated)</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Shared identifiers</span><span className="font-bold text-rose-600">0</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Linked tokens</span><span className="font-bold text-rose-600">NONE</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Linked records</span><span className="font-bold text-rose-600">NONE</span></div>
-            <div className="flex justify-between border-t border-[#111111]/10 pt-1.5 mt-1.5"><span className="text-[#111111]/50">Main-system records</span><span className="text-[#111111] font-bold">{mainSystemRecords}</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Bench records</span><span className="text-[#111111] font-bold">0</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Helplines loaded</span><span className="text-[#111111] font-bold">{helplines.length}</span></div>
-          </div>
-          {showServer && (
-            <div className="p-2 bg-purple-50 border border-purple-200 rounded text-[9px] text-purple-900 leading-relaxed mt-2">
-              <strong>Architectural invariant:</strong> production runs The Bench on separate infrastructure with a separate database. No API path to Swap, Pool, or Donor tables.
-            </div>
-          )}
-        </div>
-
-        <div className="p-4 bg-[#FAF8F4] border border-[#111111]/15 rounded-xl space-y-1.5">
-          <h4 className="text-[10px] font-bold text-[#111111] uppercase tracking-wider">Spec Coverage</h4>
-          {[
-            'Separate system & data store (4.9)',
-            'No shared identifiers (4.9)',
-            'Confidential peer support (4.9)',
-            'Helpline signposting (4.9)',
-            'Not on Discord / general chat (4.9)',
-            'Non-conditional access (4.9)',
-          ].map(f => (
-            <div key={f} className="flex items-center gap-1.5 text-[10px] text-[#111111]/70">
-              <div className="w-1 h-1 rounded-full bg-purple-600" /> {f}
-            </div>
-          ))}
-        </div>
-
-        <button
-          onClick={reset}
-          className="w-full py-2 text-xs text-[#111111]/60 hover:text-[#111111] border border-[#111111]/15 rounded-lg bg-white flex items-center justify-center gap-1.5"
-        >
-          <RotateCcw className="w-3 h-3" /> Reset Simulator
-        </button>
-      </div>
     </div>
   );
 };

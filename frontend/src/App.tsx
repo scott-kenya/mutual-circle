@@ -48,23 +48,17 @@ function App() {
             <React.Suspense fallback={<div className="p-8 text-center text-sm text-muted">Loading...</div>}>
               {currentView === 'requester' && <RequesterView />}
               {currentView === 'sms' && (
-                <div className="space-y-4">
-                  <h1 className="text-2xl font-bold text-ink">SMS Simulator</h1>
-                  <React.Suspense fallback={<div>Loading...</div>}><SmsSimulator /></React.Suspense>
-                </div>
-              )}
+                
+            <React.Suspense fallback={<div>Loading...</div>}><SmsSimulator /></React.Suspense>
+          )}
               {currentView === 'ussd' && (
-                <div className="space-y-4">
-                  <h1 className="text-2xl font-bold text-ink">USSD Simulator</h1>
-                  <React.Suspense fallback={<div>Loading...</div>}><UssdSimulator /></React.Suspense>
-                </div>
-              )}
+                
+            <React.Suspense fallback={<div>Loading...</div>}><UssdSimulator /></React.Suspense>
+          )}
               {currentView === 'whatsapp' && (
-                <div className="space-y-4">
-                  <h1 className="text-2xl font-bold text-ink">WhatsApp Simulator</h1>
-                  <React.Suspense fallback={<div>Loading...</div>}><WhatsAppSimulator /></React.Suspense>
-                </div>
-              )}
+                
+            <React.Suspense fallback={<div>Loading...</div>}><WhatsAppSimulator /></React.Suspense>
+          )}
               {currentView === 'console' && <React.Suspense fallback={<div>Loading...</div>}><ConsoleView /></React.Suspense>}
               {currentView === 'donor' && <DonorView />}
               {currentView === 'architecture' && <React.Suspense fallback={<div>Loading...</div>}><ArchitectureView /></React.Suspense>}
