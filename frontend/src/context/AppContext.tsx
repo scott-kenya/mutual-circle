@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { generateHMAC } from '../lib/hash';
 import * as api from '../lib/apiClient';
 import { setSessionExpiredHandler } from '../lib/apiClient';
 import {
@@ -493,9 +492,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const executePool = async (category: PoolRequest['category'], objectId: string, amount: number, tokenOverride?: string): Promise<PoolRequest | null> => {
     const t = tokenOverride || tokenHash;
     if (!t) return null;
-    const hashed = await generateHMAC(objectId);
+    // R.U.T.H 4.7: server hashes the raw object ID (pool.py:_hash_object_id).
     const pence = Math.round(amount * 100);
-    const r = await api.createPoolRequest(t, category, hashed, pence);
+    const r = await api.createPoolRequest(t, category, objectId, pence);
     if (!r) return null;
     await refetchAll();
     return mapPoolFromBackend(r, t);

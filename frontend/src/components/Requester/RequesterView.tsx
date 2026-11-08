@@ -321,7 +321,7 @@ export const RequesterView: React.FC = () => {
       const rateCheck = tokenHash ? consumeRate(tokenHash, numAmount) : { ok: true };
       if (!rateCheck.ok) { const msg = (rateCheck as any).reason || 'Daily limit reached.'; setPoolError(msg); push({ kind: 'error', message: msg }); setPooling(false); return; }
       const res = await executePool(poolCat, poolObject, numAmount);
-      if (!res) { setPoolError('Object not found in institutional records. Check the number and try again.'); push({ kind: 'error', message: 'Object not found in records' }); setPooling(false); return; }
+      if (!res) { setPoolError('Could not submit. Check the number format and try again.'); push({ kind: 'error', message: 'Submit failed - check number format' }); setPooling(false); return; }
       setPoolResult(res); setPoolStep('success'); push({ kind: 'success', message: res.status === 'pending_check' ? 'Submitted for review' : 'Request queued' });
       const next = peekRate(tokenHash!);
       setRate({ count: next.count, value: next.value });
