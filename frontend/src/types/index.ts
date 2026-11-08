@@ -80,6 +80,7 @@ export interface MatchInterest {
 export interface RiskFlag {
   id: string;
   targetHash: string;
+  targetDisplay?: string;
   severity: 'high' | 'elevated' | 'routine';
   title: string;
   description: string;
@@ -94,6 +95,7 @@ export interface AuditLogEntry {
   actorRole: StaffRole | 'system';
   action: string;
   targetHash: string;
+  targetDisplay?: string;
 }
 
 export interface DedupItem {

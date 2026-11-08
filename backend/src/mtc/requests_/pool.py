@@ -13,6 +13,7 @@ mtc.requests_.tiers.
 import hashlib
 import hmac
 
+import json
 import asyncpg
 
 from mtc.config import settings
@@ -55,13 +56,21 @@ async def create_pool(
 
     tier = assign_tier(category, amount_pence)
     status = initial_status(tier)
+    # R.U.T.H 4.7: the DB column `hashed_object_id` stores the keyed
+    # HMAC hash (privacy). The raw value the requester typed is stored
+    # in metadata.raw_object_id so they can still see what they submitted
+    # in their own requests list (they cannot verify a 64-char hash
+    # against a physical bill). Partners never read metadata — they
+    # only see hashed_object_id, so the raw value stays requester-only.
     row = await conn.fetchrow(
         """
-        INSERT INTO requests (token_hash, type, category, amount_pence, hashed_object_id, tier, status)
-        VALUES ($1, 'pool', $2, $3, $4, $5, $6)
+        INSERT INTO requests (token_hash, type, category, amount_pence, hashed_object_id, metadata, tier, status)
+        VALUES ($1, 'pool', $2, $3, $4, $5::jsonb, $6, $7)
         RETURNING id, created_at, tier, status
         """,
-        token_hash, category, amount_pence, object_id_hash, tier, status,
+        token_hash, category, amount_pence, object_id_hash,
+        json.dumps({"raw_object_id": hashed_object_id}),
+        tier, status,
     )
     pool_template = "pool_pending" if status == "pending_check" else "pool_submitted"
     await notify(
@@ -74,7 +83,8 @@ async def create_pool(
         "id": str(row["id"]),
         "type": "pool",
         "category": category,
-        "hashed_object_id": hashed_object_id,  # raw for requester display
+        "hashed_object_id": object_id_hash,   # the actual hash (DB value)
+        "object_id_display": hashed_object_id, # the raw value (requester display)
         "amount_pence": amount_pence,
         "tier": row["tier"],
         "status": row["status"],

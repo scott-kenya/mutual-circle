@@ -51,3 +51,6 @@ _c1_dump/
 
 # Local diagnostic logs
 _*.log
+
+# Tier 2 photo evidence - runtime user-uploaded files
+backend/uploads/

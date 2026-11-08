@@ -51,6 +51,32 @@ async def notify(
     if template is None:
         logger.warning("Unknown notification template: %s", template_key)
         return
+
+    # Auto-resolve hash -> raw display value.
+    # Callers pass `context={"ref": hashed_object_id}` (the HMAC hash,
+    # per R.U.T.H 4.7). But the requester cannot verify a 64-char hash
+    # against their physical bill. If `ref` looks like a hash and we
+    # have a request_id, swap in the raw value stored in
+    # metadata.raw_object_id (only present on post-fix requests).
+    if context and request_id and isinstance(context.get("ref"), str):
+        ref = context["ref"]
+        if len(ref) == 64 and all(c in "0123456789abcdef" for c in ref):
+            try:
+                row = await conn.fetchrow(
+                    "SELECT metadata FROM requests WHERE id = $1",
+                    request_id,
+                )
+                if row and row["metadata"]:
+                    meta = row["metadata"]
+                    if isinstance(meta, str):
+                        import json as _j
+                        meta = _j.loads(meta)
+                    if isinstance(meta, dict):
+                        raw = meta.get("raw_object_id")
+                        if raw:
+                            context = {**context, "ref": raw}
+            except Exception as exc:
+                logger.warning("raw_object_id lookup failed for %s: %s", request_id, exc)
     try:
         content = template.format(**(context or {}))
     except (KeyError, IndexError) as exc:

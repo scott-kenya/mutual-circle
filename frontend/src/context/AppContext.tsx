@@ -100,7 +100,7 @@ function mapPoolFromBackend(r: unknown, tokenHash: string): PoolRequest {
     id: String(o.id ?? ''),
     tokenHash,
     category: (o.category as PoolRequest['category']) || 'utility',
-    hashedObjectId: (o.hashed_object_id as string) || (meta.object_hash as string) || '',
+    hashedObjectId: (o.object_id_display as string) || (o.hashed_object_id as string) || (meta.object_hash as string) || '',
     amount: Number(o.amount_pence ?? 0) / 100,
     tier: Number(o.tier ?? 1) as PoolRequest['tier'],
     status: (o.status as PoolRequest['status']) || 'pending_check',

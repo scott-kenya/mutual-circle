@@ -5,6 +5,7 @@ Enforces transitions:
   - dispatch: allowed only from 'verified' (implemented in Day 4)
   - everything else: read-only
 """
+import json
 import asyncpg
 
 from mtc.notifications.service import notify
@@ -71,6 +72,22 @@ async def list_requests(
         """,
         token_hash, limit,
     )
+    def _display_ref(r) -> str | None:
+        """The raw value the requester typed (for their own reference).
+        Stored in metadata.raw_object_id at creation. Absent on legacy rows
+        created before that field existed — in which case the frontend
+        falls back to hashed_object_id (the hash).
+        """
+        meta = r["metadata"]
+        if isinstance(meta, str):
+            try:
+                meta = json.loads(meta)
+            except Exception:
+                return None
+        if isinstance(meta, dict):
+            return meta.get("raw_object_id")
+        return None
+
     return [
         {
             "id": str(r["id"]),
@@ -78,6 +95,7 @@ async def list_requests(
             "category": r["category"],
             "amount_pence": r["amount_pence"],
             "hashed_object_id": r["hashed_object_id"],
+            "object_id_display": _display_ref(r),
             "metadata": r["metadata"],
             "tier": r["tier"],
             "status": r["status"],

@@ -128,6 +128,19 @@ export const ConsoleView: React.FC = () => {
     setLoginId(STAFF_CREDS[loginRole].id); setLoginPin(STAFF_CREDS[loginRole].pin); setTab('queue'); setAuditSub('flags'); setReceipt(null);
   };
 
+
+  const refetchEvidenceQueue = async () => {
+    if (!sessionToken) return;
+    const r = await listEvidenceQueue(sessionToken);
+    if (r) setEvidenceQueue(r.requests);
+  };
+
+  React.useEffect(() => {
+    if (auditSub !== 'evidence') return;
+    void refetchEvidenceQueue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auditSub, sessionToken]);
+
   if (!staffRole) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center w-full animate-in fade-in zoom-in-95 duration-500">
@@ -286,19 +299,6 @@ export const ConsoleView: React.FC = () => {
       push={push}
     />
   );
-
-  const refetchEvidenceQueue = async () => {
-    if (!sessionToken) return;
-    const r = await listEvidenceQueue(sessionToken);
-    if (r) setEvidenceQueue(r.requests);
-  };
-
-  React.useEffect(() => {
-    if (auditSub !== 'evidence') return;
-    void refetchEvidenceQueue();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auditSub, sessionToken]);
-
   const renderAudit = () => (
     <div className="p-4 space-y-3">
       <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase text-[#111111]/50 tracking-wider">
@@ -402,7 +402,7 @@ export const ConsoleView: React.FC = () => {
             <div key={e.id} className="p-2 bg-white border border-[#111111]/10 rounded-lg space-y-0.5">
               <div className="flex justify-between text-[10px] font-mono"><span className="text-[#111111]/40">{e.timestamp}</span><span className="px-1 py-0.5 rounded bg-black/5 uppercase">{e.actorRole}</span></div>
               <div className="text-[11px] text-[#111111]">{e.action}</div>
-              <div className="text-[10px] font-mono text-[#1F6B4A]">{e.targetHash}</div>
+              <div className="text-[10px] font-mono text-[#1F6B4A] break-all">{e.targetDisplay || e.targetHash}</div>
             </div>
           ))}
         </div>
