@@ -600,7 +600,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await api.createDonation(donorHash, Math.round(amount * 100), isAnonymous, optInLedger);
       await refetchAll();
-      return res;
+      return res; // MUST return the newly created donation
     } catch (e) {
       console.error('[create-donation]', e);
       return null;

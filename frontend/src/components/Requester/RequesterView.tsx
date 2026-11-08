@@ -15,6 +15,7 @@ import { useToast } from '../Shared/Toast';
 import { SwapRequest, PoolRequest } from '../../types';
 import { RequesterMessages } from './Messages';
 import { RequesterHome } from './RequesterHome';
+import { RequesterIntake } from './RequesterIntake';
 import { SwapFlow } from './SwapFlow';
 import { PoolFlow } from './PoolFlow';
 import { MatchTab } from './MatchTab';
@@ -609,6 +610,46 @@ export const RequesterView: React.FC = () => {
       handleHouseholdComplete={handleHouseholdComplete}
     />
   );
+
+  if (!tokenHash) {
+    return (
+      <RequesterIntake
+        intakeStep={intakeStep}
+        phone={phone}
+        setPhone={setPhone}
+        phoneError={phoneError}
+        otpInput={otpInput}
+        setOtpInput={setOtpInput}
+        otpError={otpError}
+        otpProcessing={otpProcessing}
+        resendCooldown={resendCooldown}
+        handleSendOtp={handleSendOtp}
+        handleVerifyOtp={handleVerifyOtp}
+        handleResend={handleResend}
+        handleBackToPhone={handleBackToPhone}
+      />
+    );
+  }
+
+  if (!tokenHash) {
+    return (
+      <RequesterIntake
+        intakeStep={intakeStep}
+        phone={phone}
+        setPhone={setPhone}
+        phoneError={phoneError}
+        otpInput={otpInput}
+        setOtpInput={setOtpInput}
+        otpError={otpError}
+        otpProcessing={otpProcessing}
+        resendCooldown={resendCooldown}
+        handleSendOtp={handleSendOtp}
+        handleVerifyOtp={handleVerifyOtp}
+        handleResend={handleResend}
+        handleBackToPhone={handleBackToPhone}
+      />
+    );
+  }
 
   if (householdStep) {
     return renderHouseholdStep();

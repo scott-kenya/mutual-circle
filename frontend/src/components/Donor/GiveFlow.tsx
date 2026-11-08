@@ -48,10 +48,15 @@ export const GiveFlow: React.FC<GiveFlowProps> = (props) => {
             variant="primary"
             fullWidth
             onClick={() => props.setPayingDonation(props.payingDonation)}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-green-600 hover:bg-green-700 font-bold shadow-soft mt-4"
           >
             Pay with M-PESA
           </Button>
+        )}
+        {!props.payingDonation && (
+          <div className="text-sm text-muted text-center mt-4">
+             Donation recorded. (Awaiting M-PESA setup)
+          </div>
         )}
 
         <Card>

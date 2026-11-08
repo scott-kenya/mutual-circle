@@ -79,9 +79,14 @@ export const DonorView: React.FC = () => {
     setProcessing(true);
     const newDonation = await addDonorContribution(finalAmount, anon, ledger);
     setProcessing(false);
-    if (newDonation) {
+    
+    // If the API returned an ID, set the payment state so the modal/button shows
+    if (newDonation && newDonation.id) {
       setPayingDonation({ id: newDonation.id, amount: finalAmount * 100 });
+    } else {
+      console.warn('Donation created but no ID returned for M-PESA flow');
     }
+    
     setScreen('give_success');
   };
 
