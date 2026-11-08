@@ -1,7 +1,5 @@
 import React from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { AppProvider } from './context/AppContext';
-import { ToastProvider } from './components/Shared/Toast';
 
 const PitchHarness = React.lazy(() => import('./apps/PitchHarness'));
 const RequesterApp = React.lazy(() => import('./apps/RequesterApp'));
@@ -37,8 +35,6 @@ function App() {
   const route = getRoute();
   return (
     <ErrorBoundary>
-      <AppProvider>
-        <ToastProvider>
           <React.Suspense fallback={<div className="p-8 text-center text-sm text-muted">Loading...</div>}>
             {route === 'pitch' && <PitchHarness />}
             {route === 'donor' && <DonorApp />}
@@ -49,8 +45,6 @@ function App() {
             {route === 'whatsapp' && <WhatsAppSimulatorApp />}
             {route === 'bench' && <BenchApp />}
             {route === 'architecture' && <ArchitectureApp />}          </React.Suspense>
-        </ToastProvider>
-      </AppProvider>
     </ErrorBoundary>
   );
 }
