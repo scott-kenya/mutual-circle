@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 import asyncpg
 import bcrypt
 
+from mtc.config import settings
 from mtc.audit.log import append_audit
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,8 @@ async def issue_voucher(
             raise VoucherConflict(f"Voucher requires status 'verified', got '{req['status']}'")
 
         pin = f"{secrets.randbelow(1000000):06d}"
-        logger.info("🔑 [DEV] Generated Voucher PIN for %s: %s", partner_name, pin)
+        if settings.environment == "development":
+            logger.info("🔑 [DEV] Generated Voucher PIN for %s: %s", partner_name, pin)
         pin_hash = bcrypt.hashpw(pin.encode(), bcrypt.gensalt()).decode("utf-8")
         pin_last4 = pin[-4:]
         expires_at = datetime.now(timezone.utc) + timedelta(days=VOUCHER_VALID_DAYS)

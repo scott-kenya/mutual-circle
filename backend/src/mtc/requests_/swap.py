@@ -8,6 +8,7 @@ import logging
 import bcrypt
 
 logger = logging.getLogger(__name__)
+from mtc.config import settings
 from mtc.notifications.service import notify
 from mtc.requests_.tiers import assign_tier, initial_status
 
@@ -39,7 +40,8 @@ async def create_swap(
     status = initial_status(tier)
 
     pin = f"{secrets.randbelow(10000):04d}"
-    logger.info("🔑 [DEV] Generated Swap PIN for %s: %s", locker_location, pin)
+    if settings.environment == "development":
+        logger.info("🔑 [DEV] Generated Swap PIN for %s: %s", locker_location, pin)
     pin_hash = bcrypt.hashpw(pin.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     qr_payload = f"MTC-LK-{locker_location[:3].upper()}-{int(datetime.now(timezone.utc).timestamp())}"
     bundle_variant = _bundle_size_for_household(household_size)
