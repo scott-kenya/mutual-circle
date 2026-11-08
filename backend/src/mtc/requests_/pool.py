@@ -1,4 +1,4 @@
-﻿"""Pool request creation.
+"""Pool request creation.
 
 The Pool is object-level: the requester supplies a raw meter / admission /
 invoice number under the legacy `hashed_object_id` field name, and the
@@ -46,6 +46,7 @@ async def create_pool(
     category: str,
     hashed_object_id: str,
     amount_pence: int,
+    phone: str | None = None,
 ) -> dict:
     # Compute the keyed hash before storage (R.U.T.H 4.7). The param
     # name `hashed_object_id` is legacy — the client sends the raw
@@ -66,6 +67,7 @@ async def create_pool(
     await notify(
         conn, token_hash, str(row["id"]), pool_template,
         {"ref": hashed_object_id},
+        phone=phone,
     )
 
     return {

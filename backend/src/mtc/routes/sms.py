@@ -151,6 +151,7 @@ async def sms_inbound(
                 token_hash=token,
                 bundle_category=ctx["bundle"],
                 locker_location=ctx["location"],
+                 phone=from_,
             )
             await clear_state()
             return {"reply": "Success! Locker reserved at " + ctx["location"] + ".\nPIN: " + str(res["pin"])}
@@ -190,6 +191,7 @@ async def sms_inbound(
                 category=ctx["category"],
                 hashed_object_id=ctx["hashed_object_id"],
                 amount_pence=ctx["amount_pence"],
+                 phone=from_,
             )
             await clear_state()
             return {"reply": "Request submitted! We will notify you when it is fulfilled."}

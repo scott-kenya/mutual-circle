@@ -57,56 +57,6 @@ async def send_sms(*, phone: str, message: str) -> dict[str, Any]:
     can distinguish "AT said no" (ok=False) from "we couldn't reach AT"
     (raise). Never raises on AT-level rejection.
     """
-    if not settings.at_api_key:
-        raise RuntimeError("AT_API_KEY not configured")
-    if not settings.at_username:
-        raise RuntimeError("AT_USERNAME not configured")
-    if not message:
-        raise ValueError("message is empty")
-    if len(message) > 160:
-        raise ValueError(f"message is {len(message)} chars; AT limit is 160 (single part)")
-
-    normalized = _normalize_phone(phone)
-
-    form = {
-        "username": settings.at_username,
-        "to": normalized,
-        "message": message,
-    }
-    if settings.at_sender_id:
-        form["from"] = settings.at_sender_id
-
-    headers = {
-        "apiKey": settings.at_api_key,
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "application/json",
-    }
-
-    async with httpx.AsyncClient(timeout=20.0) as client:
-        resp = await client.post(_endpoint(), data=form, headers=headers)
-
-    if resp.status_code not in (200, 201):
-        raise RuntimeError(f"AT SMS HTTP {resp.status_code}: {resp.text[:300]}")
-
-    try:
-        body = resp.json()
-    except Exception:
-        raise RuntimeError(f"AT SMS non-JSON response: {resp.text[:300]}")
-
-    try:
-        recipient = body["SMSMessageData"]["Recipients"][0]
-    except (KeyError, IndexError, TypeError):
-        logger.error("AT SMS unexpected body: %r", body)
-        return {
-            "ok": False,
-            "message_id": None,
-            "status": "UnexpectedResponse",
-            "status_code": None,
-            "cost": None,
-            "provider_response": body,
-            "error": "AT response missing Recipients[0]",
-        }
-
     status_code = recipient.get("statusCode")
     ok = status_code == 101
 

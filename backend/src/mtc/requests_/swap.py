@@ -35,6 +35,7 @@ async def create_swap(
     bundle_category: str,
     locker_location: str,
     household_size: int | None = None,
+    phone: str | None = None,
 ) -> dict:
     tier = assign_tier("swap_bundle", 0)
     status = initial_status(tier)
@@ -66,6 +67,7 @@ async def create_swap(
     await notify(
         conn, token_hash, str(row["id"]), "swap_submitted",
         {"location": locker_location, "pin": pin},
+        phone=phone,
     )
 
     return {
