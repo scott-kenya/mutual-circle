@@ -275,31 +275,6 @@ export const SmsSimulator: React.FC = () => {
           </form>
         </div>
       </div>
-
-      <div className="w-full max-w-sm space-y-3">
-        <div className="p-4 rounded-xl bg-white border border-[#111111]/15 space-y-2">
-          <div className="flex items-center justify-between">
-            <h3 className="font-serif text-sm font-bold text-[#111111] flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-[#1F6B4A]" /> Server-Side View</h3>
-            <button onClick={() => setShowServerView(!showServerView)} className="text-[10px] text-[#1F6B4A] hover:underline flex items-center gap-1">{showServerView ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}{showServerView ? 'Hide' : 'Reveal'}</button>
-          </div>
-          <p className="text-[11px] text-[#111111]/60 leading-relaxed">What the platform database sees.</p>
-          <div className="space-y-2 pt-2 border-t border-[#111111]/10 font-mono text-[10px]">
-            <div className="flex justify-between"><span className="text-[#111111]/50">Phone (raw)</span><span className="text-rose-600 font-bold">{showServerView ? <span className="text-[#111111]">{PHONE}</span> : '----- ----- -----'}</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Token (HMAC)</span><span className="text-[#1F6B4A] font-bold">{tokenHash || 'not yet generated'}</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Channel</span><span className="text-[#111111]">SMS - {SHORTCODE}</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">Daily (shared)</span><span className="text-[#111111]">{tokenHash ? peekRate(tokenHash).count : 0} / {MAX_DAILY_REQUESTS}</span></div>
-            <div className="flex justify-between"><span className="text-[#111111]/50">State</span><span className="text-[#111111] font-bold uppercase">{state.replace('_', ' ')}</span></div>
-          </div>
-          {showServerView && (<div className="p-2 bg-rose-50 border border-rose-200 rounded text-[9px] text-rose-800 leading-relaxed mt-2"><strong>Demo note:</strong> In production, the raw phone number is never returned from the tokenising gateway - it lives only in the isolated messaging store.</div>)}
-        </div>
-        <div className="p-4 rounded-xl bg-[#FAF8F4] border border-[#111111]/15 space-y-1.5">
-          <h4 className="text-[11px] font-bold text-[#111111] uppercase tracking-wider">SMS Spec Coverage</h4>
-          {['Stateful menu navigation', 'One-way HMAC tokenisation', 'Rate limiting (25 msg cap)', 'STOP / START opt-out', 'Session timeout (5 min)', 'Swap flow with PIN delivery', 'Pool flow (utility / school / hospital)', 'Bench referral (helpline 0722 178 177)', 'Requests appear in Operations console'].map(f => (
-            <div key={f} className="flex items-center gap-1.5 text-[10px] text-[#111111]/70"><div className="w-1 h-1 rounded-full bg-[#1F6B4A]" />{f}</div>
-          ))}
-        </div>
-        <button onClick={() => { setMessages([{ id: 'sys-0', from: 'system', text: 'Welcome to Mutual Circle. Reply HELP to start, or STOP to opt out.', timestamp: 'now' }]); setState('idle'); setContext({}); setMsgCount(0); setTokenHash(null); }} className="w-full py-2 text-xs text-[#111111]/60 hover:text-[#111111] border border-[#111111]/15 rounded-lg bg-white">Reset Session</button>
-      </div>
     </div>
   );
 };
