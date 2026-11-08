@@ -73,7 +73,7 @@ See the [Current Limitations](#current-limitations) section below. In short: pay
 - **Backend:** FastAPI + asyncpg + Postgres (Neon). Alembic for migrations.
 - **Frontend:** React 18 + Vite + TypeScript + Tailwind CSS.
 - **Ledger:** HMAC-chained, publicly verifiable at `GET /ledger/public` with CSV export.
-- **Testing:** 38-assertion PowerShell integration test, all passing.
+- **Testing:** 23-test pytest suite plus a PowerShell integration test, all passing.
 - **Deployment:** Frontend on GitHub Pages, backend on any ASGI host.
 
 ## Quick start
@@ -111,9 +111,9 @@ Open http://localhost:3000/mutual-circle/ (or whichever URL Vite prints).
 
 ## Current limitations
 
-**Payments are simulated.** No M-PESA Daraja integration. Donations are database rows; dispatch and voucher paths write placeholder receipt strings (`MPESA-XXXXXXXX`). The tier system, dispatch/voucher decision, and HMAC ledger entry are all real; only the actual money movement is missing. See `ROADMAP.md` Phase B.
+**Payments are wired (sandbox).** M-PESA Daraja STK Push, OAuth, and callback handling are implemented end-to-end. B2C payouts (disbursing to institutions) require Safaricom's public certificate for the SecurityCredential; that is pending. Sandbox STK prompts only fire for whitelisted test numbers. See `docs/deploy.md` for tunnel setup.
 
-**Messaging is simulated.** No SMS, USSD, or WhatsApp gateway connected. Notification templates exist and persist to the `notifications` table; they do not go out as SMS. OTP and PIN are displayed in the browser for the pilot.
+**Messaging is wired (sandbox).** Africa's Talking SMS delivery is implemented and called by `notify()` on every state change where a phone number is available. Sandbox only delivers to whitelisted test numbers; production requires a registered Sender ID.
 
 **Locker hardware is simulated.** The locker service records the assignment but does not open a physical locker.
 
@@ -123,7 +123,7 @@ Open http://localhost:3000/mutual-circle/ (or whichever URL Vite prints).
 
 **Bench tab is a stub.** The Requester Bench shows the top-level entry (helplines + "reach out directly") but is not the full peer-support experience.
 
-**No CI pipeline yet.** Tests run locally; no GitHub Actions, no automated deploy. See `ROADMAP.md` Phase C.
+**CI is active.** GitHub Actions runs `.github/workflows/ci.yml` on every push and pull request: pytest for backend, TypeScript check and build for frontend.
 
 ## Blind-pool invariant
 
@@ -133,7 +133,7 @@ No donor is linked to a specific recipient anywhere in the schema. This is enfor
 
     & .\scripts\integration-test.ps1
 
-Expect `Total: 38 / 38 passed`. The test runs on port 8010 to isolate from a zombie socket on 8000.
+Expect `Total: 47 / 47 passed`. The test runs on port 8010 to isolate from a zombie socket on 8000.
 
 ## Deployment note (Windows)
 
