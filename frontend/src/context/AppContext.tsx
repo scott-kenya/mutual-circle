@@ -331,10 +331,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (r) setVoucherRedemptions(mapRedemptions(r));
 
     if (tokenHash) {
-      const [reqs, vouchers, donations] = await Promise.all([
+      const [reqs, vouchers] = await Promise.all([
         api.listMyRequests(tokenHash),
         api.listMyVouchers(tokenHash),
-        donorSessionToken ? api.listMyDonations(donorSessionToken) : Promise.resolve(null),
       ]);
       if (reqs) {
         const mapped = (reqs.requests || []).map((x: Record<string, unknown>) =>
@@ -346,11 +345,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setMySwaps(swaps);
       }
       if (vouchers) setMyVouchersList(mapVouchers(vouchers));
-      if (donations) setMyDonationsList(mapDonations(donations));
     } else {
       setMyRequests([]);
       setMySwaps([]);
       setMyVouchersList([]);
+    }
+
+    if (donorSessionToken) {
+      const donations = await api.listMyDonations(donorSessionToken);
+      if (donations) setMyDonationsList(mapDonations(donations));
+    } else {
       setMyDonationsList([]);
     }
 
