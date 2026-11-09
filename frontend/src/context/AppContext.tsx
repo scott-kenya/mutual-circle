@@ -28,6 +28,10 @@ interface AppContextType {
   depotCounts: DepotCounts;
   donorContributions: DonorContribution[];
   donorHash: string;
+  donorAuthenticated: boolean;
+  requestDonorOtp: (phone: string) => Promise<boolean>;
+  verifyDonorOtp: (phone: string, code: string) => Promise<boolean>;
+  logoutDonor: () => Promise<void>;
   vouchers: Voucher[];
   voucherRedemptions: VoucherRedemption[];
   matchInterests: MatchInterest[];
@@ -262,7 +266,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [staffRole, setStaffRole] = useState<StaffRole | null>(null);
   const [staffId, setStaffId] = useState<string | null>(null);
   const [emptyQueueMode, setEmptyQueueMode] = useState(false);
-  const [donorHash] = useState<string>(() => getOrCreateDonorHash());
+  const [donorSessionToken, setDonorSessionToken] = useState<string | null>(() => { try { return sessionStorage.getItem('mtc-donor-session'); } catch { return null; } });
+  const [donorHash, setDonorHash] = useState<string>(() => { try { return sessionStorage.getItem('mtc-donor-hash') || ''; } catch { return ''; } });
 
   const [myRequests, setMyRequests] = useState<PoolRequest[]>([]);
   const [mySwaps, setMySwaps] = useState<SwapRequest[]>([]);
@@ -288,23 +293,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const payPledge = useCallback(async (pledgeId: string, phone: string) => {
     if (!donorHash) return false;
-    const res = await api.payPledge(donorHash, pledgeId, phone);
+    if (!donorSessionToken) return false;
+    const res = await api.payPledge(donorSessionToken, pledgeId, phone);
     if (res && res.ok) {
       await refetchAll();
       return true;
     }
     return false;
-  }, [donorHash]);
+  }, [donorSessionToken]);
 
   const payDonation = useCallback(async (donationId: string, phone: string) => {
     if (!donorHash) return false;
-    const res = await api.payDonation(donorHash, donationId, phone);
+    if (!donorSessionToken) return false;
+    const res = await api.payDonation(donorSessionToken, donationId, phone);
     if (res && res.ok) {
       await refetchAll();
       return true;
     }
     return false;
-  }, [donorHash]);
+  }, [donorSessionToken]);
 
   const payPoolRequest = useCallback(async (requestId: string, phone: string) => {
     if (!tokenHash) return false;
@@ -327,7 +334,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const [reqs, vouchers, donations] = await Promise.all([
         api.listMyRequests(tokenHash),
         api.listMyVouchers(tokenHash),
-        api.listMyDonations(donorHash),
+        donorSessionToken ? api.listMyDonations(donorSessionToken) : Promise.resolve(null),
       ]);
       if (reqs) {
         const mapped = (reqs.requests || []).map((x: Record<string, unknown>) =>
@@ -347,7 +354,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setMyDonationsList([]);
     }
 
-    const donorPledges = await api.listMyPledges(donorHash);
+    const donorPledges = donorSessionToken ? await api.listMyPledges(donorSessionToken) : null;
     if (donorPledges) setMyPledgesList(mapPledges(donorPledges));
 
     if (sessionToken && staffRole) {
@@ -404,7 +411,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setDedupItems([]);
       setMatchInterests([]);
     }
-  }, [tokenHash, sessionToken, staffRole, donorHash]);
+  }, [tokenHash, sessionToken, staffRole, donorHash, donorSessionToken]);
 
   useEffect(() => {
     refetchAll();
@@ -440,6 +447,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const vouchers = useMemo(() => mergeById(myVouchersList, staffVouchersList), [myVouchersList, staffVouchersList]);
   const pledges = useMemo(() => mergeById(myPledgesList, staffPledgesList), [myPledgesList, staffPledgesList]);
   const donorContributions = myDonationsList;
+
+  const requestDonorOtp = async (phone: string): Promise<boolean> => {
+    const result = await api.requestDonorOtp(phone);
+    return !!(result && result.ok);
+  };
+
+  const verifyDonorOtp = async (phone: string, code: string): Promise<boolean> => {
+    const result = await api.verifyDonorOtp(phone, code);
+    if (!result?.session_token || !result.donor_hash) return false;
+    setDonorSessionToken(result.session_token);
+    setDonorHash(result.donor_hash);
+    try {
+      sessionStorage.setItem('mtc-donor-session', result.session_token);
+      sessionStorage.setItem('mtc-donor-hash', result.donor_hash);
+    } catch (e) { console.error('[donor-auth] session persistence failed', e); }
+    return true;
+  };
+
+  const logoutDonor = async (): Promise<void> => {
+    if (donorSessionToken) await api.donorLogout(donorSessionToken);
+    setDonorSessionToken(null);
+    setDonorHash('');
+    setMyDonationsList([]);
+    setMyPledgesList([]);
+    try {
+      sessionStorage.removeItem('mtc-donor-session');
+      sessionStorage.removeItem('mtc-donor-hash');
+    } catch { /* storage unavailable */ }
+  };
+
+  useEffect(() => {
+    if (!donorSessionToken) return;
+    api.donorSession(donorSessionToken).then(result => {
+      if (result?.donor_hash) setDonorHash(result.donor_hash);
+      else {
+        setDonorSessionToken(null);
+        setDonorHash('');
+        try { sessionStorage.removeItem('mtc-donor-session'); sessionStorage.removeItem('mtc-donor-hash'); } catch { /* storage unavailable */ }
+      }
+    });
+  }, []);
 
   const initializeSession = async (phone: string, channel: 'web' | 'sms' | 'ussd' = 'web'): Promise<string> => {
     const r = await api.issueTokenStrict(phone);
@@ -597,7 +645,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addDonorContribution = async (amount: number, isAnonymous: boolean, optInLedger: boolean) => {
     try {
-      const res = await api.createDonation(donorHash, Math.round(amount * 100), isAnonymous, optInLedger);
+      if (!donorSessionToken) return null;
+      const res = await api.createDonation(donorSessionToken, Math.round(amount * 100), isAnonymous, optInLedger);
       await refetchAll();
       return res; // MUST return the newly created donation
     } catch (e) {
@@ -608,7 +657,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addPledge = async (type: 'goods' | 'service_credit', description: string, locality: string, maxValue?: number) => {
     try {
-      const res = await api.createPledge(donorHash, type, description, locality, maxValue ? Math.round(maxValue * 100) : undefined);
+      if (!donorSessionToken) return null;
+      const res = await api.createPledge(donorSessionToken, type, description, locality, maxValue ? Math.round(maxValue * 100) : undefined);
       await refetchAll();
       return res;
     } catch (e) {
@@ -631,6 +681,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       tokenHash, initializeSession, logout,
+      donorAuthenticated: !!donorSessionToken && !!donorHash,
+      requestDonorOtp, verifyDonorOtp, logoutDonor,
       staffRole, staffId, loginStaff, logoutStaff,
       swapRequests, poolRequests, riskFlags, campaigns, pledges, auditLog, dedupItems,
       lockerStocks, depotCounts, donorContributions, donorHash, vouchers, voucherRedemptions, matchInterests,
