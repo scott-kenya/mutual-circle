@@ -14,6 +14,7 @@ from mtc.routes.admin import router as admin_router
 from mtc.routes.audit import router as audit_router
 from mtc.routes.campaigns import router as campaigns_router
 from mtc.routes.donors import router as donors_router
+from mtc.routes.donor_auth import router as donor_auth_router
 from mtc.routes.enrolment import router as enrolment_router
 from mtc.routes.fulfilment import router as fulfilment_router
 from mtc.routes.partner import router as partner_router
@@ -225,6 +226,7 @@ app.include_router(audit_router)
 app.include_router(partner_router)
 app.include_router(enrolment_router)
 app.include_router(campaigns_router)
+app.include_router(donor_auth_router)
 app.include_router(donors_router)
 app.include_router(pledges_router)
 app.include_router(admin_router)
