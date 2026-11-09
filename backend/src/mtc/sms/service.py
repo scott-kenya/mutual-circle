@@ -32,7 +32,7 @@ def normalize_phone(phone: str) -> str:
         p = "254" + p[1:]
     elif p.startswith("7") or p.startswith("1"):
         p = "254" + p
-    if not (p.startswith("254") and len(p) == 12 and p.isdigit()):
+    if not (len(p) == 12 and p.startswith("254") and p[3] in "17" and p.isascii() and p.isdigit()):
         raise ValueError("Enter a valid Kenyan mobile number")
     return "+" + p
 
