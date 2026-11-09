@@ -17,7 +17,7 @@ def phone_digest(phone: str) -> str:
     key = (settings.ledger_hmac_key or settings.jwt_secret).encode()
     if len(key) < 32:
         raise RuntimeError("A strong LEDGER_HMAC_KEY or JWT_SECRET is required")
-    return hmac.new(key, phone.encode(), hashlib.sha256).hexdigest()
+    return hmac.new(key, b"donor-phone:" + phone.encode(), hashlib.sha256).hexdigest()
 
 
 def donor_identity(phone_hash: str) -> str:
