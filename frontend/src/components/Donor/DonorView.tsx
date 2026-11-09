@@ -119,6 +119,7 @@ export const DonorView: React.FC = () => {
   const goTab = (t: Tab) => { setTab(t); setScreen('tab'); };
 
   useEffect(() => {
+    if (!donorSessionToken) return;
     (async () => {
       const lb = await getDonorLeaderboard(20);
       if (lb) setLeaderboard(lb.leaderboard);
@@ -133,7 +134,7 @@ export const DonorView: React.FC = () => {
       if (impact) setImpactStats(impact);
       if (dist) setDistribution(dist.by_category);
     })();
-  }, [donorHash, donorContributions.length]);
+  }, [donorHash, donorContributions.length, donorSessionToken]);
 
   const saveProfile = async () => {
     setProfileSaving(true);
