@@ -8,7 +8,6 @@ from mtc import idempotency
 from mtc.auth.donor import get_current_donor
 from mtc.db.main import get_conn
 from mtc.mpesa.client import initiate_stk_push
-from pydantic import BaseModel
 from mtc.rate_limit.counter import check_ip_rate_limit, RateLimitExceeded
 from fastapi import Request
 
