@@ -24,7 +24,12 @@ type Screen = 'tab' | 'give_success' | 'pledge_success' | 'ledger' | 'settings' 
 
 
 export const DonorView: React.FC = () => {
-  const { campaigns, pledges, donorContributions, addDonorContribution, addPledge, donorHash } = useApp();
+  const { campaigns, pledges, donorContributions, addDonorContribution, addPledge, donorHash, donorAuthenticated, donorSessionToken, requestDonorOtp, verifyDonorOtp, logoutDonor } = useApp();
+  const [authPhone, setAuthPhone] = useState('');
+  const [authCode, setAuthCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState('');
 
   const [tab, setTab] = useState<Tab>('home');
   const [screen, setScreen] = useState<Screen>('tab');
@@ -114,10 +119,11 @@ export const DonorView: React.FC = () => {
   const goTab = (t: Tab) => { setTab(t); setScreen('tab'); };
 
   useEffect(() => {
+    if (!donorSessionToken) return;
     (async () => {
       const lb = await getDonorLeaderboard(20);
       if (lb) setLeaderboard(lb.leaderboard);
-      const p = await getDonorProfile(donorHash);
+      const p = await getDonorProfile(donorSessionToken || '');
       if (p) {
         setMyProfile(p);
         setProfileName(p.display_name || '');
@@ -128,11 +134,11 @@ export const DonorView: React.FC = () => {
       if (impact) setImpactStats(impact);
       if (dist) setDistribution(dist.by_category);
     })();
-  }, [donorHash, donorContributions.length]);
+  }, [donorHash, donorContributions.length, donorSessionToken]);
 
   const saveProfile = async () => {
     setProfileSaving(true);
-    const r = await updateDonorProfile(donorHash, profileName.trim(), profileOptIn);
+    const r = await updateDonorProfile(donorSessionToken || '', profileName.trim(), profileOptIn);
     setProfileSaving(false);
     if (r) {
       setMyProfile({ display_name: r.display_name, opt_in_ledger: r.opt_in_ledger, has_profile: true });
@@ -256,6 +262,58 @@ export const DonorView: React.FC = () => {
       setScreen('activity');
     }
   }, [selectedActivity]);
+
+
+  if (!donorAuthenticated) {
+    const submitPhone = async (event: React.FormEvent) => {
+      event.preventDefault();
+      setAuthBusy(true); setAuthError('');
+      try {
+        const ok = await requestDonorOtp(authPhone);
+        if (ok) setOtpSent(true);
+        else setAuthError('We could not send a code. Check the number and try again.');
+      } catch (error) {
+        setAuthError(error instanceof Error ? error.message : 'Could not send verification code.');
+      } finally { setAuthBusy(false); }
+    };
+    const submitCode = async (event: React.FormEvent) => {
+      event.preventDefault();
+      setAuthBusy(true); setAuthError('');
+      try {
+        const ok = await verifyDonorOtp(authPhone, authCode);
+        if (!ok) setAuthError('The code is incorrect or expired. Request a new code and try again.');
+      } catch (error) {
+        setAuthError(error instanceof Error ? error.message : 'Verification failed.');
+      } finally { setAuthBusy(false); }
+    };
+    return (
+      <div className="min-h-[75vh] flex items-center justify-center p-5 bg-[#F6F4EE]">
+        <div className="w-full max-w-md bg-white rounded-3xl border border-[#111111]/10 shadow-sm p-6 space-y-5">
+          <div className="w-12 h-12 rounded-2xl bg-[#DCE8E0] text-[#1F6B4A] flex items-center justify-center"><ShieldCheck className="w-6 h-6" /></div>
+          <div>
+            <h1 className="text-2xl font-bold text-[#111111]">Donor sign-in</h1>
+            <p className="text-sm text-[#111111]/60 mt-2">Verify your Kenyan mobile number to securely access your donations, pledges and payment history.</p>
+          </div>
+          {!otpSent ? (
+            <form onSubmit={submitPhone} className="space-y-3">
+              <label className="block text-xs font-semibold uppercase text-[#111111]/60">Mobile number</label>
+              <input value={authPhone} onChange={e => setAuthPhone(e.target.value)} placeholder="07XX XXX XXX or +2547XXXXXXXX" autoComplete="tel" className="w-full border border-[#111111]/15 rounded-xl px-4 py-3 text-sm" required />
+              <button disabled={authBusy} className="w-full rounded-xl bg-[#1F6B4A] text-white font-semibold py-3 disabled:opacity-50">{authBusy ? 'Sending code…' : 'Send verification code'}</button>
+            </form>
+          ) : (
+            <form onSubmit={submitCode} className="space-y-3">
+              <label className="block text-xs font-semibold uppercase text-[#111111]/60">Six-digit code</label>
+              <input value={authCode} onChange={e => setAuthCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Enter SMS code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} className="w-full border border-[#111111]/15 rounded-xl px-4 py-3 text-lg tracking-[0.35em] text-center" required />
+              <button disabled={authBusy || authCode.length !== 6} className="w-full rounded-xl bg-[#1F6B4A] text-white font-semibold py-3 disabled:opacity-50">{authBusy ? 'Verifying…' : 'Verify and continue'}</button>
+              <button type="button" onClick={() => { setOtpSent(false); setAuthCode(''); setAuthError(''); }} className="w-full text-sm text-[#1F6B4A]">Change mobile number</button>
+            </form>
+          )}
+          {authError && <p role="alert" className="text-sm text-rose-700 bg-rose-50 rounded-xl p-3">{authError}</p>}
+          <p className="text-xs text-[#111111]/45">Codes expire after 5 minutes. Never share your verification code.</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     if (screen === 'activity' && selectedActivity) {
@@ -579,6 +637,7 @@ export const DonorView: React.FC = () => {
         <button onClick={() => setScreen('settings')} className="p-2 rounded-full hover:bg-tint transition-colors bg-surface border border-tile shadow-sm">
           <Settings className="w-5 h-5 text-ink" />
         </button>
+        <button onClick={() => { void logoutDonor(); setScreen('tab'); setTab('home'); }} className="text-xs font-semibold text-[#1F6B4A] px-3 py-2 rounded-full border border-[#1F6B4A]/20">Sign out</button>
       </div>
 
       {/* Main Content */}

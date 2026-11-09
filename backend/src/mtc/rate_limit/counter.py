@@ -67,6 +67,8 @@ async def consume_quota(
 MAX_IP_REQS_PER_DAY = {
     "pay": 10,
     "redeem": 50,
+    "donor_otp": 30,
+    "donor_verify": 100,
 }
 
 
@@ -76,7 +78,7 @@ async def check_ip_rate_limit(
     ip_address: str,
     endpoint: str,
 ) -> None:
-    """Enforce per-IP rate limits. Raises RateLimitExceeded if breached."""
+    """Increment and enforce a daily per-IP limit; persist rejected attempts too."""
     limit = MAX_IP_REQS_PER_DAY.get(endpoint, 100)
     identifier = f"IP:{ip_address}:{endpoint}"
 
@@ -92,8 +94,11 @@ async def check_ip_rate_limit(
             identifier,
         )
         count = row["request_count"]
-        if count > limit:
-            raise RateLimitExceeded(
-                f"Daily rate limit ({limit}) reached for this IP on {endpoint}.",
-                count, 0,
-            )
+
+    # Raise only after commit. Raising inside the transaction would roll back
+    # the increment and let an abusive caller retry forever.
+    if count > limit:
+        raise RateLimitExceeded(
+            f"Daily rate limit ({limit}) reached for this IP on {endpoint}.",
+            count, 0,
+        )

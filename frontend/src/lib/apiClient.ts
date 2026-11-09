@@ -13,8 +13,12 @@ function genIdempotencyKey(): string {
 
 type SessionExpiredHandler = () => void;
 let onSessionExpired: SessionExpiredHandler | null = null;
+let onDonorSessionExpired: SessionExpiredHandler | null = null;
 export function setSessionExpiredHandler(handler: SessionExpiredHandler | null): void {
   onSessionExpired = handler;
+}
+export function setDonorSessionExpiredHandler(handler: SessionExpiredHandler | null): void {
+  onDonorSessionExpired = handler;
 }
 
 let backendKnownDown = false;
@@ -70,7 +74,9 @@ async function call<T>(path: string, init?: RequestInit): Promise<T | null> {
     });
     if (res.status === 401) {
       const isPartnerEndpoint = path.startsWith('/partners/');
-      if (!isPartnerEndpoint && onSessionExpired) onSessionExpired();
+      const isDonorEndpoint = path.startsWith('/donor-auth/') || path === '/donations' || path.startsWith('/donations/') || path === '/pledges' || path.startsWith('/pledges/');
+      if (isDonorEndpoint && onDonorSessionExpired) onDonorSessionExpired();
+      else if (!isPartnerEndpoint && onSessionExpired) onSessionExpired();
       console.warn(`[api] 401 on ${init?.method ?? 'GET'} ${path} - session expired`);
       return null;
     }
@@ -195,23 +201,67 @@ export const enrolmentMetrics = (sessionToken: string) =>
 export const listCampaigns = () =>
   call<{ campaigns: any[] }>('/campaigns');
 
-export const createDonation = (donorHash: string, amountPence: number, isAnonymous: boolean, optInLedger: boolean) =>
+export const requestDonorOtp = (phone: string) =>
+  call<{ ok: boolean; message: string }>('/donor-auth/otp', { method: 'POST', body: JSON.stringify({ phone }) });
+
+export const verifyDonorOtp = (phone: string, code: string) =>
+  call<{ session_token: string; donor_hash: string; expires_at: string; session_id: string }>(
+    '/donor-auth/verify', { method: 'POST', body: JSON.stringify({ phone, code }) },
+  );
+
+export const donorSession = (token: string) =>
+  call<{ donor_hash: string; expires_at: string }>('/donor-auth/session', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+export const donorLogout = (token: string) =>
+  call<{ ok: boolean }>('/donor-auth/logout', {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` },
+  });
+
+const donorAuth = (token: string) => ({ Authorization: `Bearer ${token}` });
+
+export const createDonation = (token: string, amountPence: number, isAnonymous: boolean, optInLedger: boolean) =>
   call<{ id: string; amount_pence: number; is_anonymous: boolean; opt_in_ledger: boolean; created_at: string }>(
     '/donations',
-    { method: 'POST', headers: { 'X-Donor-Hash': donorHash, 'Idempotency-Key': genIdempotencyKey() }, body: JSON.stringify({ amount_pence: amountPence, is_anonymous: isAnonymous, opt_in_ledger: optInLedger }) },
+    { method: 'POST', headers: { ...donorAuth(token), 'Idempotency-Key': genIdempotencyKey() }, body: JSON.stringify({ amount_pence: amountPence, is_anonymous: isAnonymous, opt_in_ledger: optInLedger }) },
   );
 
-export const listMyDonations = (donorHash: string) =>
-  call<{ donations: any[] }>('/donations/mine', { headers: { 'X-Donor-Hash': donorHash } });
+export const listMyDonations = (token: string) =>
+  call<{ donations: any[] }>('/donations/mine', { headers: donorAuth(token) });
 
-export const createPledge = (donorHash: string, type: 'goods' | 'service_credit', description: string, locality: string, maxValuePence?: number) =>
+export const createPledge = (token: string, type: 'goods' | 'service_credit', description: string, locality: string, maxValuePence?: number) =>
   call<{ id: string; type: string; description: string; locality: string; max_value_pence: number | null; status: string; created_at: string }>(
     '/pledges',
-    { method: 'POST', headers: { 'X-Donor-Hash': donorHash }, body: JSON.stringify({ type, description, locality, max_value_pence: maxValuePence }) },
+    { method: 'POST', headers: donorAuth(token), body: JSON.stringify({ type, description, locality, max_value_pence: maxValuePence }) },
   );
 
-export const listMyPledges = (donorHash: string) =>
-  call<{ pledges: any[] }>('/pledges/mine', { headers: { 'X-Donor-Hash': donorHash } });
+export const listMyPledges = (token: string) =>
+  call<{ pledges: any[] }>('/pledges/mine', { headers: donorAuth(token) });
+
+export const getDonorProfile = (token: string) =>
+  call<{ display_name: string; opt_in_ledger: boolean; has_profile: boolean }>(
+    '/donations/profile', { headers: donorAuth(token) },
+  );
+
+export const updateDonorProfile = (token: string, displayName: string, optInLedger: boolean) =>
+  call<{ display_name: string; opt_in_ledger: boolean }>(
+    '/donations/profile',
+    { method: 'POST', headers: donorAuth(token), body: JSON.stringify({ display_name: displayName, opt_in_ledger: optInLedger }) },
+  );
+
+export const payDonation = (token: string, donationId: string, phone: string) =>
+  call<{ ok: boolean; checkout_request_id: string; message: string }>(
+    `/donations/${donationId}/pay`,
+    { method: 'POST', headers: { ...donorAuth(token), 'Idempotency-Key': genIdempotencyKey() }, body: JSON.stringify({ phone }) },
+  );
+
+export const payPledge = (token: string, pledgeId: string, phone: string) =>
+  call<{ ok: boolean; checkout_request_id: string; message: string }>(
+    `/pledges/${pledgeId}/pay`,
+    { method: 'POST', headers: { ...donorAuth(token), 'Idempotency-Key': genIdempotencyKey() }, body: JSON.stringify({ phone }) },
+  );
+
 
 export const expressMatchInterest = (token: string, requestId: string, opportunityId: string, title: string) =>
   call<{ id: string; opportunity_id: string; title: string; status: string; created_at: string }>(

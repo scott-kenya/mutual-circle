@@ -1,14 +1,4 @@
-"""Africa's Talking SMS service — async, httpx-based.
-
-This module sends an SMS and returns a structured result. It does NOT
-persist the phone number. The caller decides what to do with it.
-
-Sandbox note: AT sandbox does NOT deliver to real handsets. Messages go
-to the browser simulator at:
-    https://simulator.africastalking.com:1517/simulator
-A sandbox "success" is HTTP 200 with statusCode 101 and a messageId.
-Real delivery requires a live account + registered Sender ID.
-"""
+"""Africa's Talking SMS service — async, httpx-based."""
 import logging
 from typing import Any
 
@@ -31,41 +21,50 @@ def _endpoint() -> str:
     raise ValueError(f"AT_ENVIRONMENT must be 'sandbox' or 'production', got {env!r}")
 
 
-def _normalize_phone(phone: str) -> str:
-    """Return ``+2547XXXXXXXX`` (AT wants the leading +)."""
+def normalize_phone(phone: str) -> str:
+    """Normalize Kenyan mobile numbers to +254XXXXXXXXX."""
     if not phone:
-        raise ValueError("phone is empty")
-    p = phone.strip().replace(" ", "").replace("-", "")
+        raise ValueError("Phone number is required")
+    p = "".join(ch for ch in phone.strip() if ch not in " -()")
     if p.startswith("+"):
         p = p[1:]
     if p.startswith("0"):
         p = "254" + p[1:]
-    if p.startswith("7") or p.startswith("1"):
+    elif p.startswith("7") or p.startswith("1"):
         p = "254" + p
-    if not (p.startswith("254") and len(p) == 12 and p.isdigit()):
-        raise ValueError(f"Cannot normalize phone {phone!r}")
+    if not (len(p) == 12 and p.startswith("254") and p[3] in "17" and p.isascii() and p.isdigit()):
+        raise ValueError("Enter a valid Kenyan mobile number")
     return "+" + p
 
 
+# Backwards-compatible alias for existing internal callers and tests.
+_normalize_phone = normalize_phone
+
+
 async def send_sms(*, phone: str, message: str) -> dict[str, Any]:
-    """Send one SMS.
+    """Send an SMS via Africa's Talking and return a normalized result."""
+    if not settings.at_api_key or not settings.at_username:
+        raise RuntimeError("Africa's Talking is not configured")
+    normalized = normalize_phone(phone)
+    data = {"username": settings.at_username, "to": normalized, "message": message}
+    if settings.at_sender_id:
+        data["from"] = settings.at_sender_id
+    headers = {"apiKey": settings.at_api_key, "Accept": "application/json"}
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(_endpoint(), data=data, headers=headers)
+            response.raise_for_status()
+            body = response.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.exception("Africa's Talking SMS transport failed")
+        raise RuntimeError("SMS delivery service is unavailable") from exc
 
-    Result keys:
-      ok, message_id, status, status_code, cost, provider_response, error
-
-    Raises RuntimeError only on config or transport failure, so callers
-    can distinguish "AT said no" (ok=False) from "we couldn't reach AT"
-    (raise). Never raises on AT-level rejection.
-    """
+    recipients = (body.get("SMSMessageData") or {}).get("Recipients") or []
+    recipient = recipients[0] if recipients else {}
     status_code = recipient.get("statusCode")
     ok = status_code == 101
-
     if not ok:
-        logger.warning(
-            "AT SMS non-success: code=%r status=%r",
-            status_code, recipient.get("status"),
-        )
-
+        logger.warning("AT SMS non-success: code=%r status=%r", status_code, recipient.get("status"))
     return {
         "ok": ok,
         "message_id": recipient.get("messageId"),
@@ -73,5 +72,5 @@ async def send_sms(*, phone: str, message: str) -> dict[str, Any]:
         "status_code": status_code,
         "cost": recipient.get("cost"),
         "provider_response": body,
-        "error": None,
+        "error": None if ok else recipient.get("status") or "SMS was not accepted",
     }

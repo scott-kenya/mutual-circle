@@ -1,22 +1,22 @@
 """Donor contributions — blind pooled giving, leaderboard, profile."""
+import logging
 import asyncpg
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from mtc import idempotency
+from mtc.auth.donor import get_current_donor
 from mtc.db.main import get_conn
 from mtc.mpesa.client import initiate_stk_push
-from pydantic import BaseModel
 from mtc.rate_limit.counter import check_ip_rate_limit, RateLimitExceeded
 from fastapi import Request
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/donations", tags=["donors"])
 
 
-def _require_token(x_donor_hash: str = Header(..., alias="X-Donor-Hash")) -> str:
-    if not x_donor_hash or len(x_donor_hash) < 4:
-        raise HTTPException(401, "Invalid donor hash")
-    return x_donor_hash
+_require_token = get_current_donor
 
 
 class DonateBody(BaseModel):
