@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Header
 from pydantic import BaseModel, Field
 
 from mtc.db.main import get_conn
+from mtc.auth.donor import get_current_donor
 from mtc.mpesa.client import initiate_stk_push
 from mtc.rate_limit.counter import check_ip_rate_limit, RateLimitExceeded
 from fastapi import HTTPException, Request
@@ -11,8 +12,7 @@ from fastapi import HTTPException, Request
 router = APIRouter(prefix="/pledges", tags=["pledges"])
 
 
-def _require_donor(x_donor_hash: str = Header(..., alias="X-Donor-Hash")) -> str:
-    return x_donor_hash
+_require_donor = get_current_donor
 
 
 class PledgeBody(BaseModel):
