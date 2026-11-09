@@ -65,20 +65,6 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-function getOrCreateDonorHash(): string {
-  try {
-    let h = localStorage.getItem('mtc-donor-hash');
-    if (!h) {
-      h = 'donor-' + Math.random().toString(36).slice(2, 10);
-      localStorage.setItem('mtc-donor-hash', h);
-    }
-    return h;
-  } catch (e) {
-    console.warn('[donor-hash] crypto.randomUUID unavailable, falling back to shared anonymous hash', e);
-    return 'donor-anonymous';
-  }
-}
-
 function parseMeta(v: unknown): Record<string, unknown> {
   if (typeof v === 'string') { try { return JSON.parse(v) as Record<string, unknown>; } catch { return {}; } }
   return (v as Record<string, unknown>) || {};
