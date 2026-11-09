@@ -10,7 +10,6 @@ from mtc.auth.donor import (
     create_donor_session, donor_identity, otp_digest, phone_digest,
     revoke_donor_session, verify_donor_token,
 )
-from mtc.config import settings
 from mtc.db.main import get_conn
 from mtc.sms.service import normalize_phone, send_sms
 
@@ -105,6 +104,8 @@ async def verify_otp(body: VerifyBody, conn: asyncpg.Connection = Depends(get_co
                 session = await create_donor_session(conn, donor_hash, phash)
     if invalid_status:
         raise HTTPException(invalid_status[0], invalid_status[1])
+    if session is None or donor_hash is None:
+        raise HTTPException(400, "Could not verify donor session")
     return {**session, "donor_hash": donor_hash}
 
 
