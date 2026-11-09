@@ -32,8 +32,8 @@ def test_legacy_sms_normalizer_alias():
 
 
 def test_donor_identity_is_stable_and_not_phone_number(monkeypatch):
-    monkeypatch.setattr(settings, "token_hmac_key_current", "t" * 40)
-    monkeypatch.setattr(settings, "ledger_hmac_key", "l" * 40)
+    monkeypatch.setattr(settings, "ledger_hmac_key", "t" * 40)
+    monkeypatch.setattr(settings, "ledger_hmac_key", "t" * 40)
     phone_hash = phone_digest("+254712345678")
     identity = donor_identity(phone_hash)
     assert phone_hash == phone_digest("+254712345678")
