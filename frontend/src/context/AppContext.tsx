@@ -480,13 +480,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     if (!donorSessionToken) return;
+    // A network outage is not proof that a session is invalid. A real 401
+    // clears the session through the API client's donor-expiry handler.
     api.donorSession(donorSessionToken).then(result => {
       if (result?.donor_hash) setDonorHash(result.donor_hash);
-      else {
-        setDonorSessionToken(null);
-        setDonorHash('');
-        try { sessionStorage.removeItem('mtc-donor-session'); sessionStorage.removeItem('mtc-donor-hash'); } catch { /* storage unavailable */ }
-      }
     });
   }, []);
 
