@@ -37,6 +37,10 @@ def normalize_phone(phone: str) -> str:
     return "+" + p
 
 
+# Backwards-compatible alias for existing internal callers and tests.
+_normalize_phone = normalize_phone
+
+
 async def send_sms(*, phone: str, message: str) -> dict[str, Any]:
     """Send an SMS via Africa's Talking and return a normalized result."""
     if not settings.at_api_key or not settings.at_username:
