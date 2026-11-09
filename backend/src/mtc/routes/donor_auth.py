@@ -3,7 +3,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 import asyncpg
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mtc.auth.donor import (
@@ -12,6 +12,7 @@ from mtc.auth.donor import (
 )
 from mtc.db.main import get_conn
 from mtc.sms.service import normalize_phone, send_sms
+from mtc.rate_limit.counter import check_ip_rate_limit, RateLimitExceeded
 
 router = APIRouter(prefix="/donor-auth", tags=["donor-auth"])
 
@@ -25,7 +26,11 @@ class VerifyBody(PhoneBody):
 
 
 @router.post("/otp")
-async def request_otp(body: PhoneBody, conn: asyncpg.Connection = Depends(get_conn)):
+async def request_otp(body: PhoneBody, request: Request, conn: asyncpg.Connection = Depends(get_conn)):
+    try:
+        await check_ip_rate_limit(conn, ip_address=request.client.host, endpoint="donor_otp")
+    except RateLimitExceeded as exc:
+        raise HTTPException(429, detail=exc.reason) from exc
     try:
         phone = normalize_phone(body.phone)
     except ValueError as exc:
@@ -67,7 +72,11 @@ async def request_otp(body: PhoneBody, conn: asyncpg.Connection = Depends(get_co
 
 
 @router.post("/verify")
-async def verify_otp(body: VerifyBody, conn: asyncpg.Connection = Depends(get_conn)):
+async def verify_otp(body: VerifyBody, request: Request, conn: asyncpg.Connection = Depends(get_conn)):
+    try:
+        await check_ip_rate_limit(conn, ip_address=request.client.host, endpoint="donor_verify")
+    except RateLimitExceeded as exc:
+        raise HTTPException(429, detail=exc.reason) from exc
     try:
         phone = normalize_phone(body.phone)
     except ValueError as exc:
