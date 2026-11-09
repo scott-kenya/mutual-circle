@@ -76,7 +76,6 @@ def _row_to_dict(r):
     return d
 
 
-from pydantic import BaseModel
 
 class PledgePayBody(BaseModel):
     phone: str
