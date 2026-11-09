@@ -1,4 +1,5 @@
 """Donor contributions — blind pooled giving, leaderboard, profile."""
+import logging
 import asyncpg
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
@@ -10,6 +11,8 @@ from mtc.mpesa.client import initiate_stk_push
 from pydantic import BaseModel
 from mtc.rate_limit.counter import check_ip_rate_limit, RateLimitExceeded
 from fastapi import Request
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/donations", tags=["donors"])
 
