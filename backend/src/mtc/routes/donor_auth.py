@@ -75,32 +75,38 @@ async def verify_otp(body: VerifyBody, conn: asyncpg.Connection = Depends(get_co
         raise HTTPException(422, str(exc)) from exc
     phash = phone_digest(phone)
     now = datetime.now(timezone.utc)
+    invalid_status = None
+    session = None
+    donor_hash = None
     async with conn.transaction():
         challenge = await conn.fetchrow(
             "SELECT * FROM donor_otp_challenges WHERE phone_hash = $1 FOR UPDATE", phash
         )
         if challenge is None or challenge["expires_at"] <= now:
-            raise HTTPException(400, "Code expired or not found. Request a new code")
-        if challenge["attempts"] >= 5:
-            raise HTTPException(429, "Too many incorrect codes. Request a new code")
-        expected = challenge["code_hash"]
-        supplied = otp_digest(phash, body.code)
-        import hmac
-        if not hmac.compare_digest(expected, supplied):
-            await conn.execute(
-                "UPDATE donor_otp_challenges SET attempts = attempts + 1 WHERE phone_hash = $1",
-                phash,
-            )
-            raise HTTPException(400, "Incorrect verification code")
-        await conn.execute("DELETE FROM donor_otp_challenges WHERE phone_hash = $1", phash)
-        donor_hash = donor_identity(phash)
-        await conn.execute(
-            """INSERT INTO donor_profiles (donor_hash, display_name, opt_in_ledger)
-               VALUES ($1, '', false) ON CONFLICT (donor_hash) DO NOTHING""",
-            donor_hash,
-        )
-        session = await create_donor_session(conn, donor_hash, phash)
+            invalid_status = (400, "Code expired or not found. Request a new code")
+        elif challenge["attempts"] >= 5:
+            invalid_status = (429, "Too many incorrect codes. Request a new code")
+        else:
+            import hmac
+            if not hmac.compare_digest(challenge["code_hash"], otp_digest(phash, body.code)):
+                await conn.execute(
+                    "UPDATE donor_otp_challenges SET attempts = attempts + 1 WHERE phone_hash = $1",
+                    phash,
+                )
+                invalid_status = (400, "Incorrect verification code")
+            else:
+                await conn.execute("DELETE FROM donor_otp_challenges WHERE phone_hash = $1", phash)
+                donor_hash = donor_identity(phash)
+                await conn.execute(
+                    """INSERT INTO donor_profiles (donor_hash, display_name, opt_in_ledger)
+                       VALUES ($1, '', false) ON CONFLICT (donor_hash) DO NOTHING""",
+                    donor_hash,
+                )
+                session = await create_donor_session(conn, donor_hash, phash)
+    if invalid_status:
+        raise HTTPException(invalid_status[0], invalid_status[1])
     return {**session, "donor_hash": donor_hash}
+
 
 
 @router.get("/session")
