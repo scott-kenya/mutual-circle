@@ -1,7 +1,6 @@
 """Phone-verified donor authentication with revocable, DB-backed sessions."""
 import hashlib
 import hmac
-import secrets
 from datetime import datetime, timedelta, timezone
 
 import asyncpg
@@ -9,12 +8,9 @@ from fastapi import Depends, Header, HTTPException
 from jose import JWTError, jwt
 
 from mtc.config import settings
+from mtc.db.main import get_conn
 
 ALGORITHM = "HS256"
-OTP_TTL_MINUTES = 5
-OTP_MAX_ATTEMPTS = 5
-OTP_RESEND_SECONDS = 60
-OTP_MAX_SENDS_PER_HOUR = 5
 
 
 def phone_digest(phone: str) -> str:
@@ -32,8 +28,7 @@ def donor_identity(phone_hash: str) -> str:
 
 
 def otp_digest(phone_hash: str, code: str) -> str:
-    key = settings.jwt_secret.encode()
-    return hmac.new(key, (phone_hash + ":" + code).encode(), hashlib.sha256).hexdigest()
+    return hmac.new(settings.jwt_secret.encode(), (phone_hash + ":" + code).encode(), hashlib.sha256).hexdigest()
 
 
 async def create_donor_session(conn: asyncpg.Connection, donor_hash: str, phone_hash: str) -> dict:
@@ -46,8 +41,7 @@ async def create_donor_session(conn: asyncpg.Connection, donor_hash: str, phone_
     sid = str(row["id"])
     token = jwt.encode(
         {"sub": donor_hash, "sid": sid, "kind": "donor", "exp": expires_at},
-        settings.jwt_secret,
-        algorithm=ALGORITHM,
+        settings.jwt_secret, algorithm=ALGORITHM,
     )
     return {"session_token": token, "expires_at": expires_at.isoformat(), "session_id": sid}
 
@@ -63,9 +57,7 @@ async def verify_donor_token(conn: asyncpg.Connection, token: str) -> dict | Non
     if not sid or not donor_hash:
         return None
     row = await conn.fetchrow(
-        """SELECT id, donor_hash, expires_at, revoked_at
-           FROM donor_sessions WHERE id = $1""",
-        sid,
+        "SELECT id, donor_hash, expires_at, revoked_at FROM donor_sessions WHERE id = $1", sid
     )
     if row is None or row["revoked_at"] is not None:
         return None
@@ -77,25 +69,14 @@ async def verify_donor_token(conn: asyncpg.Connection, token: str) -> dict | Non
 
 async def get_current_donor(
     authorization: str | None = Header(None, alias="Authorization"),
-    conn: asyncpg.Connection = Depends(lambda: None),
-) -> dict:
-    # The dependency is rebound to the shared DB connection below to avoid
-    # accepting identity from any caller-controlled donor-hash header.
-    raise RuntimeError("get_current_donor must be wired through donor_session_dependency")
-
-
-def donor_session_dependency(get_conn):
-    async def _dependency(
-        authorization: str | None = Header(None, alias="Authorization"),
-        conn: asyncpg.Connection = Depends(get_conn),
-    ) -> dict:
-        if not authorization or not authorization.lower().startswith("bearer "):
-            raise HTTPException(401, "Donor sign-in required")
-        session = await verify_donor_token(conn, authorization[7:].strip())
-        if session is None:
-            raise HTTPException(401, "Invalid or expired donor session")
-        return session
-    return _dependency
+    conn: asyncpg.Connection = Depends(get_conn),
+) -> str:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(401, "Donor sign-in required")
+    session = await verify_donor_token(conn, authorization[7:].strip())
+    if session is None:
+        raise HTTPException(401, "Invalid or expired donor session")
+    return session["donor_hash"]
 
 
 async def revoke_donor_session(conn: asyncpg.Connection, session_id: str) -> None:
