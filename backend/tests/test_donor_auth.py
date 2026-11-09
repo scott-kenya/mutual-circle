@@ -21,7 +21,7 @@ def test_normalize_kenyan_phone(raw, expected):
     assert normalize_phone(raw) == expected
 
 
-@pytest.mark.parametrize("raw", ["", "12345", "+1 415 555 2671", "25471234567", "2547123456789"])
+@pytest.mark.parametrize("raw", ["", "12345", "+1 415 555 2671", "25471234567", "2547123456789", "+254000000000", "+254999999999"])
 def test_reject_invalid_phone(raw):
     with pytest.raises(ValueError):
         normalize_phone(raw)
@@ -32,7 +32,6 @@ def test_legacy_sms_normalizer_alias():
 
 
 def test_donor_identity_is_stable_and_not_phone_number(monkeypatch):
-    monkeypatch.setattr(settings, "ledger_hmac_key", "t" * 40)
     monkeypatch.setattr(settings, "ledger_hmac_key", "t" * 40)
     phone_hash = phone_digest("+254712345678")
     identity = donor_identity(phone_hash)
