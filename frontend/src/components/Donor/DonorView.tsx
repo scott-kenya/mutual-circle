@@ -24,7 +24,7 @@ type Screen = 'tab' | 'give_success' | 'pledge_success' | 'ledger' | 'settings' 
 
 
 export const DonorView: React.FC = () => {
-  const { campaigns, pledges, donorContributions, addDonorContribution, addPledge, donorHash, donorAuthenticated, requestDonorOtp, verifyDonorOtp } = useApp();
+  const { campaigns, pledges, donorContributions, addDonorContribution, addPledge, donorHash, donorAuthenticated, donorSessionToken, requestDonorOtp, verifyDonorOtp } = useApp();
   const [authPhone, setAuthPhone] = useState('');
   const [authCode, setAuthCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -122,7 +122,7 @@ export const DonorView: React.FC = () => {
     (async () => {
       const lb = await getDonorLeaderboard(20);
       if (lb) setLeaderboard(lb.leaderboard);
-      const p = await getDonorProfile(donorHash);
+      const p = await getDonorProfile(donorSessionToken || '');
       if (p) {
         setMyProfile(p);
         setProfileName(p.display_name || '');
@@ -137,7 +137,7 @@ export const DonorView: React.FC = () => {
 
   const saveProfile = async () => {
     setProfileSaving(true);
-    const r = await updateDonorProfile(donorHash, profileName.trim(), profileOptIn);
+    const r = await updateDonorProfile(donorSessionToken || '', profileName.trim(), profileOptIn);
     setProfileSaving(false);
     if (r) {
       setMyProfile({ display_name: r.display_name, opt_in_ledger: r.opt_in_ledger, has_profile: true });
