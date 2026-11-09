@@ -74,7 +74,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T | null> {
     });
     if (res.status === 401) {
       const isPartnerEndpoint = path.startsWith('/partners/');
-      const isDonorEndpoint = path.startsWith('/donor-auth/') || path.startsWith('/donations/') || path.startsWith('/pledges');
+      const isDonorEndpoint = path.startsWith('/donor-auth/') || path === '/donations' || path.startsWith('/donations/') || path === '/pledges' || path.startsWith('/pledges/');
       if (isDonorEndpoint && onDonorSessionExpired) onDonorSessionExpired();
       else if (!isPartnerEndpoint && onSessionExpired) onSessionExpired();
       console.warn(`[api] 401 on ${init?.method ?? 'GET'} ${path} - session expired`);
