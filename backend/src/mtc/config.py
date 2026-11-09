@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     token_hmac_key_previous: str = ""
     messaging_encryption_key: str = ""
     jwt_secret: str = ""
+    donor_session_hours: int = 24
     partner_hmac_key: str = ""
 
 
