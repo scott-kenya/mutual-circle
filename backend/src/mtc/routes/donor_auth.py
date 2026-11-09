@@ -40,6 +40,7 @@ async def request_otp(body: PhoneBody, request: Request, conn: asyncpg.Connectio
     code = f"{secrets.randbelow(1_000_000):06d}"
 
     async with conn.transaction():
+        await conn.execute("SELECT pg_advisory_xact_lock(hashtext($1))", phash)
         old = await conn.fetchrow(
             "SELECT * FROM donor_otp_challenges WHERE phone_hash = $1 FOR UPDATE", phash
         )
@@ -65,8 +66,10 @@ async def request_otp(body: PhoneBody, request: Request, conn: asyncpg.Connectio
     try:
         result = await send_sms(phone=phone, message=f"Your Mutual Circle verification code is {code}. It expires in 5 minutes. Do not share it.")
     except RuntimeError as exc:
+        await conn.execute("UPDATE donor_otp_challenges SET resend_after = now() WHERE phone_hash = $1 AND code_hash = $2", phash, otp_digest(phash, code))
         raise HTTPException(503, "SMS delivery is temporarily unavailable") from exc
     if not result["ok"]:
+        await conn.execute("UPDATE donor_otp_challenges SET resend_after = now() WHERE phone_hash = $1 AND code_hash = $2", phash, otp_digest(phash, code))
         raise HTTPException(503, "SMS could not be sent. Please try again later")
     return {"ok": True, "message": "If the number can receive SMS, a verification code has been sent."}
 
