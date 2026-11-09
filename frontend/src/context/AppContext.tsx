@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import * as api from '../lib/apiClient';
-import { setSessionExpiredHandler } from '../lib/apiClient';
+import { setSessionExpiredHandler, setDonorSessionExpiredHandler } from '../lib/apiClient';
 import {
   PoolRequest, SwapRequest, RiskFlag, Campaign, Pledge, AuditLogEntry,
   DedupItem, LockerStock, DepotCounts, DonorContribution, StaffRole,
@@ -430,7 +430,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setStaffId(null);
       try { sessionStorage.removeItem('mtc-session-token'); } catch {   }
     });
-    return () => setSessionExpiredHandler(null);
+    setDonorSessionExpiredHandler(() => {
+      setDonorSessionToken(null);
+      setDonorHash('');
+      setMyDonationsList([]);
+      setMyPledgesList([]);
+      try { sessionStorage.removeItem('mtc-donor-session'); sessionStorage.removeItem('mtc-donor-hash'); } catch { /* storage unavailable */ }
+    });
+    return () => {
+      setSessionExpiredHandler(null);
+      setDonorSessionExpiredHandler(null);
+    };
   }, []);
 
   useEffect(() => {
