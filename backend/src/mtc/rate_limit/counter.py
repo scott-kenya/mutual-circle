@@ -67,6 +67,8 @@ async def consume_quota(
 MAX_IP_REQS_PER_DAY = {
     "pay": 10,
     "redeem": 50,
+    "donor_otp": 10,
+    "donor_verify": 30,
 }
 
 
