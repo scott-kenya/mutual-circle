@@ -14,9 +14,9 @@ ALGORITHM = "HS256"
 
 
 def phone_digest(phone: str) -> str:
-    key = (settings.token_hmac_key_current or settings.jwt_secret).encode()
+    key = (settings.ledger_hmac_key or settings.jwt_secret).encode()
     if len(key) < 32:
-        raise RuntimeError("A strong TOKEN_HMAC_KEY_CURRENT or JWT_SECRET is required")
+        raise RuntimeError("A strong LEDGER_HMAC_KEY or JWT_SECRET is required")
     return hmac.new(key, phone.encode(), hashlib.sha256).hexdigest()
 
 
