@@ -682,7 +682,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       tokenHash, initializeSession, logout,
-      donorAuthenticated: !!donorSessionToken && !!donorHash,
+      donorAuthenticated: !!donorSessionToken,
       donorSessionToken,
       requestDonorOtp, verifyDonorOtp, logoutDonor,
       staffRole, staffId, loginStaff, logoutStaff,
