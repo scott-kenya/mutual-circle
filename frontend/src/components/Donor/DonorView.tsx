@@ -24,7 +24,7 @@ type Screen = 'tab' | 'give_success' | 'pledge_success' | 'ledger' | 'settings' 
 
 
 export const DonorView: React.FC = () => {
-  const { campaigns, pledges, donorContributions, addDonorContribution, addPledge, donorHash, donorAuthenticated, donorSessionToken, requestDonorOtp, verifyDonorOtp } = useApp();
+  const { campaigns, pledges, donorContributions, addDonorContribution, addPledge, donorHash, donorAuthenticated, donorSessionToken, requestDonorOtp, verifyDonorOtp, logoutDonor } = useApp();
   const [authPhone, setAuthPhone] = useState('');
   const [authCode, setAuthCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -636,6 +636,7 @@ export const DonorView: React.FC = () => {
         <button onClick={() => setScreen('settings')} className="p-2 rounded-full hover:bg-tint transition-colors bg-surface border border-tile shadow-sm">
           <Settings className="w-5 h-5 text-ink" />
         </button>
+        <button onClick={() => { void logoutDonor(); setScreen('tab'); setTab('home'); }} className="text-xs font-semibold text-[#1F6B4A] px-3 py-2 rounded-full border border-[#1F6B4A]/20">Sign out</button>
       </div>
 
       {/* Main Content */}
