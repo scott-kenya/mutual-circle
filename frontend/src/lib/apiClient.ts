@@ -13,8 +13,12 @@ function genIdempotencyKey(): string {
 
 type SessionExpiredHandler = () => void;
 let onSessionExpired: SessionExpiredHandler | null = null;
+let onDonorSessionExpired: SessionExpiredHandler | null = null;
 export function setSessionExpiredHandler(handler: SessionExpiredHandler | null): void {
   onSessionExpired = handler;
+}
+export function setDonorSessionExpiredHandler(handler: SessionExpiredHandler | null): void {
+  onDonorSessionExpired = handler;
 }
 
 let backendKnownDown = false;
@@ -70,7 +74,9 @@ async function call<T>(path: string, init?: RequestInit): Promise<T | null> {
     });
     if (res.status === 401) {
       const isPartnerEndpoint = path.startsWith('/partners/');
-      if (!isPartnerEndpoint && onSessionExpired) onSessionExpired();
+      const isDonorEndpoint = path.startsWith('/donor-auth/') || path.startsWith('/donations/') || path.startsWith('/pledges');
+      if (isDonorEndpoint && onDonorSessionExpired) onDonorSessionExpired();
+      else if (!isPartnerEndpoint && onSessionExpired) onSessionExpired();
       console.warn(`[api] 401 on ${init?.method ?? 'GET'} ${path} - session expired`);
       return null;
     }
