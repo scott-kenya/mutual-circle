@@ -1,6 +1,6 @@
 """Pledges — donor side of The Match."""
 import asyncpg
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from mtc.db.main import get_conn
