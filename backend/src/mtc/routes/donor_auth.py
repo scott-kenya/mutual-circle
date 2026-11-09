@@ -106,7 +106,11 @@ async def verify_otp(body: VerifyBody, request: Request, conn: asyncpg.Connectio
                 )
                 invalid_status = (400, "Incorrect verification code")
             else:
-                await conn.execute("DELETE FROM donor_otp_challenges WHERE phone_hash = $1", phash)
+                # Retain the row as the per-phone hourly send counter, but invalidate the OTP.
+                await conn.execute(
+                    "UPDATE donor_otp_challenges SET code_hash = '', expires_at = now(), attempts = 0 WHERE phone_hash = $1",
+                    phash,
+                )
                 donor_hash = donor_identity(phash)
                 await conn.execute(
                     """INSERT INTO donor_profiles (donor_hash, display_name, opt_in_ledger)
