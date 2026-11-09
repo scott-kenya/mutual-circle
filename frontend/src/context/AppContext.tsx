@@ -29,6 +29,7 @@ interface AppContextType {
   donorContributions: DonorContribution[];
   donorHash: string;
   donorAuthenticated: boolean;
+  donorSessionToken: string | null;
   requestDonorOtp: (phone: string) => Promise<boolean>;
   verifyDonorOtp: (phone: string, code: string) => Promise<boolean>;
   logoutDonor: () => Promise<void>;
@@ -686,6 +687,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{
       tokenHash, initializeSession, logout,
       donorAuthenticated: !!donorSessionToken && !!donorHash,
+      donorSessionToken,
       requestDonorOtp, verifyDonorOtp, logoutDonor,
       staffRole, staffId, loginStaff, logoutStaff,
       swapRequests, poolRequests, riskFlags, campaigns, pledges, auditLog, dedupItems,
